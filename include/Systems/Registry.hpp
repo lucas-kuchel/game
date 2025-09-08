@@ -159,6 +159,7 @@ namespace Systems
     public:
         using BitsetType = std::bitset<sizeof...(Ts)>;
         using ArchetypeType = Types::SparseSet<Resources::EntityHandle>;
+        using DescriptorType = RegistryDescriptor<Ts...>;
 
         Registry() = default;
         ~Registry() = default;
@@ -196,6 +197,25 @@ namespace Systems
 
         template <typename... TQueried>
         requires((RegistryDescriptor<Ts...>::template Contains<TQueried> && ...) && (sizeof...(TQueried) != 0))
+        inline Resources::EntityHandle CreateEntity()
+        {
+            Resources::EntityHandle entity = CreateBlankEntity();
+            std::size_t id = entity.ID;
+            BitsetType mask = MakeBitmask<TQueried...>();
+
+            mEntityMasks[id] = mask;
+
+            ArchetypeType& archetype = mArchetypes.Insert(mask);
+
+            archetype.Insert(id, entity);
+
+            (AddEntityToSparseSet<TQueried>(entity, TQueried()) && ...);
+
+            return entity;
+        }
+
+        template <typename... TQueried>
+        requires((RegistryDescriptor<Ts...>::template Contains<TQueried> && ...) && (sizeof...(TQueried) != 0))
         inline Resources::EntityHandle CreateEntity(TQueried&&... components)
         {
             Resources::EntityHandle entity = CreateBlankEntity();
@@ -208,7 +228,7 @@ namespace Systems
 
             archetype.Insert(id, entity);
 
-            (AddEntityToSparseSet<TQueried>(entity, components) && ...);
+            (AddEntityToSparseSet<TQueried>(entity, std::forward<TQueried>(components)) && ...);
 
             return entity;
         }
@@ -403,6 +423,20 @@ namespace Systems
         [[nodiscard]] inline auto GetEntityView(ArchetypeType& archetype) const
         {
             return EntityView<Registry<RegistryDescriptor<Ts...>>, TQueried...>(this, archetype);
+        }
+
+        template <typename... TQueried>
+        requires(RegistryDescriptor<Ts...>::template Contains<TQueried> && ...)
+        [[nodiscard]] inline auto GetEntityView()
+        {
+            return EntityView<Registry<RegistryDescriptor<Ts...>>, TQueried...>(this, GetArchetype(MakeBitmask<TQueried...>()));
+        }
+
+        template <typename... TQueried>
+        requires(RegistryDescriptor<Ts...>::template Contains<TQueried> && ...)
+        [[nodiscard]] inline auto GetEntityView() const
+        {
+            return EntityView<Registry<RegistryDescriptor<Ts...>>, TQueried...>(this, GetArchetype(MakeBitmask<TQueried...>()));
         }
 
     private:

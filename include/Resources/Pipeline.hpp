@@ -29,6 +29,26 @@ namespace Resources
         POINT,
     };
 
+    enum class PipelineFrontFace
+    {
+        CLOCKWISE,
+        ANTICLOCKWISE,
+    };
+
+    enum class PipelinePolygonMode
+    {
+        SOLID,
+        LINE,
+        POINT,
+    };
+
+    enum class PipelineFaceCulling
+    {
+        BACKFACE,
+        FRONTFACE,
+        DISABLED,
+    };
+
     struct PipelineDescriptor
     {
         std::vector<ShaderDescriptor> Shaders;
@@ -36,6 +56,9 @@ namespace Resources
         std::vector<BufferHandle> InputBuffers;
 
         PipelinePrimitive Primitive;
+        PipelineFrontFace FrontFace;
+        PipelinePolygonMode PolygonMode;
+        PipelineFaceCulling FaceCulling;
     };
 
     struct PipelineHandle

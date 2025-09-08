@@ -11,8 +11,9 @@ namespace Resources
     struct SubmissionDescriptor
     {
         std::vector<BufferHandle> VertexBuffers;
-        BufferHandle IndexBuffer;
+        std::vector<BufferHandle> BufferInputs;
 
+        BufferHandle IndexBuffer;
         PipelineHandle Pipeline;
     };
 

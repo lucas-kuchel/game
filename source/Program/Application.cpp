@@ -8,7 +8,7 @@
 namespace Program
 {
     Application::Application()
-        : mContext(CreateContext()), mWindow(CreateWindow()), mRenderer(CreateRenderer())
+        : mContext(CreateContext()), mWindow(CreateWindow()), mRenderer(CreateRenderer()), mInstance(mContext, mRenderer, mWindow)
     {
     }
 
@@ -21,6 +21,7 @@ namespace Program
         mContext.Update();
         mWindow.Update();
         mRenderer.Update();
+        mInstance.Update();
     }
 
     bool Application::ShouldUpdate() const
