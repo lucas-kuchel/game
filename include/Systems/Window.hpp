@@ -3,6 +3,7 @@
 #include <Debug/Exception.hpp>
 #include <Systems/Context.hpp>
 
+#include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
