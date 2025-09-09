@@ -13,6 +13,11 @@
 
 namespace Game
 {
+    struct RenderableComponent
+    {
+        Resources::SubmissionHandle Handle;
+    };
+
     struct BasicMeshVertex
     {
         glm::fvec3 Position;
@@ -28,15 +33,5 @@ namespace Game
 
         Resources::BufferHandle VertexBuffer;
         Resources::BufferHandle IndexBuffer;
-        Resources::BufferHandle ConstantBuffer;
-
-        Resources::SubmissionHandle Submission;
-
-        static void Create(BasicMeshComponent& mesh, Systems::Renderer& renderer, Resources::PipelineHandle& pipeline);
-        static void Update(BasicMeshComponent& mesh, Systems::Renderer& renderer);
-        static void Delete(BasicMeshComponent& mesh, Systems::Renderer& renderer);
-
-        static void Transform(BasicMeshComponent& mesh, TransformComponent2D& transform, Systems::Renderer& renderer);
-        static void Transform(BasicMeshComponent& mesh, TransformComponent3D& transform, Systems::Renderer& renderer);
     };
 }

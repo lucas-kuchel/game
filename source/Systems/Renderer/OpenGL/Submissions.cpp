@@ -18,41 +18,48 @@ namespace Systems
 
         info.Descriptor = descriptor;
 
-        const auto& pipeline = mSpecifics->PipelineData.Get(descriptor.Pipeline.ID);
+        const auto& pipeline = mSpecifics->RasterPipelineData.Get(descriptor.Pipeline.ID);
+
+        std::uint32_t bufferIndex = 0;
 
         for (const auto& vertexBuffer : descriptor.VertexBuffers)
         {
             const auto& bufferInfo = mSpecifics->BufferData.Get(vertexBuffer.ID);
+            const auto& format = pipeline.Descriptor.VertexBufferFormats[bufferIndex];
 
             std::size_t stride = 0;
 
-            for (const auto& attribute : pipeline.Descriptor.VertexInput)
+            for (const auto& attribute : format.Attributes)
             {
-                stride += mSpecifics->GetTypeSize(attribute.Type);
+                stride += mSpecifics->GetTypeSize(attribute);
             }
 
-            glVertexArrayVertexBuffer(info.ID, bufferInfo.Descriptor.Slot, bufferInfo.ID, 0, stride);
+            glVertexArrayVertexBuffer(info.ID, bufferIndex, bufferInfo.ID, 0, stride);
 
             std::size_t offset = 0;
+            std::size_t index = 0;
 
-            for (const auto& attribute : pipeline.Descriptor.VertexInput)
+            for (const auto& attribute : format.Attributes)
             {
-                auto typeInfo = mSpecifics->GetGLAttributeFormat(attribute.Type);
+                auto typeInfo = mSpecifics->GetGLAttributeFormat(attribute);
 
-                glEnableVertexArrayAttrib(info.ID, attribute.Slot);
+                glEnableVertexArrayAttrib(info.ID, index);
 
                 glVertexArrayAttribFormat(
                     info.ID,
-                    attribute.Slot,
+                    index,
                     typeInfo.Components,
                     typeInfo.GLType,
                     typeInfo.Normalized ? GL_TRUE : GL_FALSE,
                     offset);
 
-                glVertexArrayAttribBinding(info.ID, attribute.Slot, bufferInfo.Descriptor.Slot);
+                glVertexArrayAttribBinding(info.ID, index, bufferIndex);
 
-                offset += mSpecifics->GetTypeSize(attribute.Type);
+                offset += mSpecifics->GetTypeSize(attribute);
+                index++;
             }
+
+            bufferIndex++;
         }
 
         const auto& indexBufferInfo = mSpecifics->BufferData.Get(descriptor.IndexBuffer.ID);

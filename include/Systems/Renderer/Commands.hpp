@@ -6,10 +6,10 @@ namespace Systems
 {
     class Renderer;
 
-    class RendererCommandBuffer
+    class CommandBuffer
     {
     public:
-        ~RendererCommandBuffer();
+        ~CommandBuffer();
 
         void Submit(const Resources::SubmissionHandle& submission);
         void Flush();
@@ -19,7 +19,7 @@ namespace Systems
     private:
         friend class Renderer;
 
-        RendererCommandBuffer(RendererBackendVariant& backend, Renderer& renderer, std::size_t id);
+        CommandBuffer(RendererBackendVariant& backend, Renderer& renderer, std::size_t id);
 
         Types::SparseSet<Resources::SubmissionHandle> mBuffer;
 

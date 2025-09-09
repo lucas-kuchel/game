@@ -4,41 +4,29 @@ namespace Systems
 {
     Resources::SubmissionHandle Renderer::CreateSubmission(const Resources::SubmissionDescriptor& descriptor)
     {
-        std::vector<Resources::BufferAttributeDescriptor> meshAttributes;
-
-        for (const auto& buffer : descriptor.VertexBuffers)
-        {
-            if (!mBufferData.Contains(buffer.ID) || mBufferGenerations[buffer.ID] != buffer.Generation)
-            {
-                throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(const Resources::SubmissionDescriptor&):\n"
-                                                                           "invalid argument\n"
-                                                                           "provided vertex buffer does not exist");
-            }
-
-            auto& bufferData = mBufferData.Get(buffer.ID);
-            auto& attributes = bufferData.Attributes;
-
-            meshAttributes.insert(meshAttributes.end(), attributes.begin(), attributes.end());
-        }
-
-        if (!mPipelineData.Contains(descriptor.Pipeline.ID) || mPipelineGenerations[descriptor.Pipeline.ID] != descriptor.Pipeline.Generation)
+        if (!mRasterPipelineData.Contains(descriptor.Pipeline.ID) || mPipelineGenerations[descriptor.Pipeline.ID] != descriptor.Pipeline.Generation)
         {
             throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(const Resources::SubmissionDescriptor&):\n"
                                                                        "invalid argument\n"
                                                                        "provided pipeline does not exist");
         }
 
-        auto& pipelineData = mPipelineData.Get(descriptor.Pipeline.ID);
-        auto& pipelineAttributes = pipelineData.VertexInput;
+        auto& pipelineData = mRasterPipelineData.Get(descriptor.Pipeline.ID);
+        auto& vertexAttributes = pipelineData.VertexBufferFormats;
+        auto& dataAttributes = pipelineData.DataBufferFormats;
 
-        std::sort(pipelineAttributes.begin(), pipelineAttributes.end());
-        std::sort(meshAttributes.begin(), meshAttributes.end());
-
-        if (pipelineAttributes.size() != meshAttributes.size() || pipelineAttributes != meshAttributes)
+        if (vertexAttributes.size() != descriptor.VertexBuffers.size())
         {
             throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(const Resources::SubmissionDescriptor&):\n"
                                                                        "invalid argument\n"
-                                                                       "mismatch between pipeline attribute inputs and provided vertex attributes");
+                                                                       "mismatch between vertex buffer formats and vertex buffer handles");
+        }
+
+        if (dataAttributes.size() != descriptor.DataBuffers.size())
+        {
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(const Resources::SubmissionDescriptor&):\n"
+                                                                       "invalid argument\n"
+                                                                       "mismatch between data buffer formats and data buffer handles");
         }
 
         Resources::SubmissionHandle handle;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Debug/Exception.hpp>
+
 #include <bitset>
 #include <cstdint>
 #include <optional>
@@ -122,7 +124,9 @@ namespace Types
 
                 if (!next)
                 {
-                    throw;
+                    throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE, "T& Types::BitsetTree::Get(const std::bitset<BitsetSize>&):\n"
+                                                                           "out of range error\n"
+                                                                           "bitset address does not exist");
                 }
 
                 current = next;
@@ -130,7 +134,9 @@ namespace Types
 
             if (!current->ArchetypeIndex.has_value())
             {
-                throw;
+                throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE, "T& Types::BitsetTree::Get(const std::bitset<BitsetSize>&):\n"
+                                                                       "out of range error\n"
+                                                                       "bitset address does not exist");
             }
 
             return mContiguous[current->ArchetypeIndex.value()].second;
@@ -147,7 +153,9 @@ namespace Types
 
                 if (!next)
                 {
-                    throw;
+                    throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE, "const T& Types::BitsetTree::Get(const std::bitset<BitsetSize>&) const:\n"
+                                                                           "out of range error\n"
+                                                                           "bitset address does not exist");
                 }
 
                 current = next;
@@ -155,7 +163,9 @@ namespace Types
 
             if (!current->ArchetypeIndex.has_value())
             {
-                throw;
+                throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE, "const T& Types::BitsetTree::Get(const std::bitset<BitsetSize>&) const:\n"
+                                                                       "out of range error\n"
+                                                                       "bitset address does not exist");
             }
 
             return mContiguous[current->ArchetypeIndex.value()].second;

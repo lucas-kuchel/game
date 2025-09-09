@@ -62,7 +62,7 @@ namespace Systems
 
     RendererBackendVariant Renderer::CreateBackend(const RendererDescriptor& descriptor)
     {
-        switch (descriptor.Context.get().Get<ContextAttribute::RENDERER>())
+        switch (descriptor.Context.Get<ContextAttribute::RENDERER>())
         {
             case RendererBackend::OPENGL:
             {

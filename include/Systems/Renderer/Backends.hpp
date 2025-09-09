@@ -12,8 +12,6 @@
 #include <memory>
 #include <variant>
 
-#include <glm/glm.hpp>
-
 namespace Systems
 {
     enum class RendererAttribute : std::uint32_t;
@@ -29,7 +27,7 @@ namespace Systems
 
     struct RendererDescriptor;
 
-    class RendererCommandBuffer;
+    class CommandBuffer;
 
     template <RendererAttribute>
     struct RendererAttributeType;
@@ -48,16 +46,16 @@ namespace Systems
         void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
         void DeleteBuffer(const Resources::BufferHandle& handle);
 
-        void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::PipelineDescriptor& descriptor);
+        void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
         void DeletePipeline(const Resources::PipelineHandle& handle);
 
         void CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
         void DeleteSubmission(const Resources::SubmissionHandle& handle);
 
-        void CreateCommandBuffer(const RendererCommandBuffer& buffer);
-        void SubmitToCommandBuffer(const RendererCommandBuffer& buffer, const Resources::SubmissionHandle& submission);
-        void DrawCommandBuffer(const RendererCommandBuffer& buffer);
-        void DeleteCommandBuffer(const RendererCommandBuffer& buffer);
+        void CreateCommandBuffer(const CommandBuffer& buffer);
+        void SubmitToCommandBuffer(const CommandBuffer& buffer, const Resources::SubmissionHandle& submission);
+        void DrawCommandBuffer(const CommandBuffer& buffer);
+        void DeleteCommandBuffer(const CommandBuffer& buffer);
 
         template <RendererAttribute A>
         void Set(const RendererAttributeType<A>::Type& value);
@@ -82,16 +80,16 @@ namespace Systems
         void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
         void DeleteBuffer(const Resources::BufferHandle& handle);
 
-        void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::PipelineDescriptor& descriptor);
+        void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
         void DeletePipeline(const Resources::PipelineHandle& handle);
 
         void CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
         void DeleteSubmission(const Resources::SubmissionHandle& handle);
 
-        void CreateCommandBuffer(const RendererCommandBuffer& buffer);
-        void SubmitToCommandBuffer(const RendererCommandBuffer& buffer, const Resources::SubmissionHandle& submission);
-        void DrawCommandBuffer(const RendererCommandBuffer& buffer);
-        void DeleteCommandBuffer(const RendererCommandBuffer& buffer);
+        void CreateCommandBuffer(const CommandBuffer& buffer);
+        void SubmitToCommandBuffer(const CommandBuffer& buffer, const Resources::SubmissionHandle& submission);
+        void DrawCommandBuffer(const CommandBuffer& buffer);
+        void DeleteCommandBuffer(const CommandBuffer& buffer);
 
         template <RendererAttribute A>
         void Set(const RendererAttributeType<A>::Type& value);

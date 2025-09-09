@@ -2,14 +2,14 @@
 
 namespace Systems
 {
-    RendererCommandBuffer::RendererCommandBuffer(RendererBackendVariant& backend, Renderer& renderer, std::size_t id)
+    CommandBuffer::CommandBuffer(RendererBackendVariant& backend, Renderer& renderer, std::size_t id)
         : mBackend(backend), mRenderer(renderer), mID(id)
     {
         std::visit([this](auto& backend)
                    { backend->CreateCommandBuffer(*this); }, mBackend.get());
     }
 
-    RendererCommandBuffer::~RendererCommandBuffer()
+    CommandBuffer::~CommandBuffer()
     {
         std::visit([this](auto& backend)
                    { backend->DeleteCommandBuffer(*this); }, mBackend.get());
@@ -20,11 +20,11 @@ namespace Systems
         renderer.mCommandBufferCount--;
     }
 
-    void RendererCommandBuffer::Submit(const Resources::SubmissionHandle& submission)
+    void CommandBuffer::Submit(const Resources::SubmissionHandle& submission)
     {
         if (mBuffer.Contains(submission.ID))
         {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "void Systems::RendererCommandBuffer::Submit(const Resources::SubmissionHandle&):\n"
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "void Systems::CommandBuffer::Submit(const Resources::SubmissionHandle&):\n"
                                                                        "invalid argument\n"
                                                                        "provided submission has already been submitted into this command buffer");
         }
@@ -35,13 +35,13 @@ namespace Systems
                    { backend->SubmitToCommandBuffer(*this, submission); }, mBackend.get());
     }
 
-    void RendererCommandBuffer::Flush()
+    void CommandBuffer::Flush()
     {
         mBuffer.Clear();
         mBuffer.ShrinkToFit();
     }
 
-    RendererCommandBuffer Renderer::CreateCommandBuffer()
+    CommandBuffer Renderer::CreateCommandBuffer()
     {
         std::size_t id = 0;
 
@@ -57,14 +57,14 @@ namespace Systems
             mCommandBufferFreeList.pop_back();
         }
 
-        return RendererCommandBuffer(mBackend, *this, id);
+        return CommandBuffer(mBackend, *this, id);
     }
 
-    void Renderer::DrawCommandBuffer(const RendererCommandBuffer& buffer)
+    void Renderer::DrawCommandBuffer(const CommandBuffer& buffer)
     {
         if (buffer.mBuffer.Empty())
         {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "void Systems::Renderer::DrawCommandBuffer(const RendererCommandBuffer&):\n"
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "void Systems::Renderer::DrawCommandBuffer(const CommandBuffer&):\n"
                                                                        "invalid argument\n"
                                                                        "provided command buffer is empty");
         }
@@ -73,7 +73,7 @@ namespace Systems
                    { backend->DrawCommandBuffer(buffer); }, mBackend);
     }
 
-    const Types::SparseSet<Resources::SubmissionHandle>& RendererCommandBuffer::GetContents() const
+    const Types::SparseSet<Resources::SubmissionHandle>& CommandBuffer::GetContents() const
     {
         return mBuffer;
     }

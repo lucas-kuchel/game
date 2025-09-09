@@ -3,6 +3,8 @@
 #include <Types/BitsetTree.hpp>
 #include <Types/SparseSet.hpp>
 
+#include <Debug/Exception.hpp>
+
 #include <Resources/Entity.hpp>
 
 #include <bitset>
@@ -209,7 +211,7 @@ namespace Systems
 
             archetype.Insert(id, entity);
 
-            (AddEntityToSparseSet<TQueried>(entity, TQueried()) && ...);
+            (AddEntityToSparseSet<TQueried>(entity, TQueried()), ...);
 
             return entity;
         }
@@ -228,7 +230,7 @@ namespace Systems
 
             archetype.Insert(id, entity);
 
-            (AddEntityToSparseSet<TQueried>(entity, std::forward<TQueried>(components)) && ...);
+            (AddEntityToSparseSet<TQueried>(entity, std::forward<TQueried>(components)), ...);
 
             return entity;
         }
@@ -260,7 +262,10 @@ namespace Systems
             }
             else
             {
-                throw;
+                throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE, "void Systems::Registry<D>::DestroyEntity(Resources::EntityHandle):\n"
+                                                                       "out of range error\n"
+                                                                       "entity does not exist and cannot be destroyed (ID = {}, Generation = {})",
+                                       entity.ID, entity.Generation);
             }
         }
 
@@ -321,7 +326,10 @@ namespace Systems
             }
             else
             {
-                throw;
+                throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE, "void Systems::Registry<D>::AddComponentToEntity<T>(Resources::EntityHandle, TComponent&&):\n"
+                                                                       "out of range error\n"
+                                                                       "entity does not exist and cannot have components added to it (ID = {}, Generation = {})",
+                                       entity.ID, entity.Generation);
             }
         }
 
@@ -329,7 +337,7 @@ namespace Systems
         requires((RegistryDescriptor<Ts...>::template Contains<TQueried> && ...) && sizeof...(TQueried) != 0)
         inline void AddComponentsToEntity(Resources::EntityHandle entity, TQueried&&... components)
         {
-            (AddComponentToEntity<TQueried>(entity, std::forward<TQueried>(components)) && ...);
+            (AddComponentToEntity<TQueried>(entity, std::forward<TQueried>(components)), ...);
         }
 
         template <typename TComponent>
@@ -355,15 +363,18 @@ namespace Systems
             }
             else
             {
-                throw;
+                throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE, "void Systems::Registry<D>::RemoveComponentFromEntity<T>(Resources::EntityHandle):\n"
+                                                                       "out of range error\n"
+                                                                       "entity does not exist and cannot have components removed from it (ID = {}, Generation = {})",
+                                       entity.ID, entity.Generation);
             }
         }
 
         template <typename... TQueried>
         requires((RegistryDescriptor<Ts...>::template Contains<TQueried> && ...) && sizeof...(TQueried) != 0)
-        [[nodiscard]] inline bool RemoveComponentsFromEntity(Resources::EntityHandle entity)
+        inline void RemoveComponentsFromEntity(Resources::EntityHandle entity)
         {
-            return (RemoveComponentFromEntity<TQueried>(entity) && ...);
+            return (RemoveComponentFromEntity<TQueried>(entity), ...);
         }
 
         [[nodiscard]] inline Types::BitsetTree<ArchetypeType, sizeof...(Ts)>& GetArchetypes()
@@ -423,20 +434,6 @@ namespace Systems
         [[nodiscard]] inline auto GetEntityView(ArchetypeType& archetype) const
         {
             return EntityView<Registry<RegistryDescriptor<Ts...>>, TQueried...>(this, archetype);
-        }
-
-        template <typename... TQueried>
-        requires(RegistryDescriptor<Ts...>::template Contains<TQueried> && ...)
-        [[nodiscard]] inline auto GetEntityView()
-        {
-            return EntityView<Registry<RegistryDescriptor<Ts...>>, TQueried...>(this, GetArchetype(MakeBitmask<TQueried...>()));
-        }
-
-        template <typename... TQueried>
-        requires(RegistryDescriptor<Ts...>::template Contains<TQueried> && ...)
-        [[nodiscard]] inline auto GetEntityView() const
-        {
-            return EntityView<Registry<RegistryDescriptor<Ts...>>, TQueried...>(this, GetArchetype(MakeBitmask<TQueried...>()));
         }
 
     private:

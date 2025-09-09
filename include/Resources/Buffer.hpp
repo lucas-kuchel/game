@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <limits>
 #include <vector>
 
 namespace Resources
@@ -81,30 +82,17 @@ namespace Resources
         F32_4x3
     };
 
-    struct BufferAttributeDescriptor
+    struct BufferFormatDescriptor
     {
-        BufferAttributeType Type;
+        std::vector<BufferAttributeType> Attributes;
 
-        std::size_t Slot = 0;
+        std::size_t Index;
 
-        bool operator<(const BufferAttributeDescriptor& other) const
-        {
-            return Slot < other.Slot && Type < other.Type;
-        }
-
-        bool operator==(const BufferAttributeDescriptor& other) const
-        {
-            return Slot == other.Slot && Type == other.Type;
-        }
+        BufferType Type;
     };
 
     struct BufferDescriptor
     {
-        BufferType Type = BufferType::STORAGE;
-
-        std::vector<BufferAttributeDescriptor> Attributes;
-
-        std::size_t Slot = 0;
         std::size_t Size = 0;
     };
 
@@ -112,13 +100,23 @@ namespace Resources
     {
         void* Data = nullptr;
 
-        std::size_t Size = 0;
+        std::size_t Stride = 0;
         std::size_t Offset = 0;
     };
 
     struct BufferHandle
     {
-        std::size_t ID = 0;
+        std::size_t ID = std::numeric_limits<std::size_t>::max();
         std::size_t Generation = 0;
+
+        bool Valid() const
+        {
+            return ID != std::numeric_limits<std::size_t>::max();
+        }
+
+        bool Invalid() const
+        {
+            return ID == std::numeric_limits<std::size_t>::max();
+        }
     };
 }

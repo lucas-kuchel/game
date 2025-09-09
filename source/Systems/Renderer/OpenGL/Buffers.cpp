@@ -13,48 +13,20 @@ namespace Systems
             throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
                                    "Resources::BufferHandle Systems::Renderer::CreateBuffer(const Resources::BufferDescriptor&):\n"
                                    "OpenGL resource creation error\n"
-                                   "failed to create OpenGL buffer");
+                                   "failed to create buffer (Size = {})",
+                                   descriptor.Size);
         }
 
         info.Descriptor = descriptor;
-        info.Usage = GL_DYNAMIC_DRAW;
 
-        switch (descriptor.Type)
-        {
-            case Resources::BufferType::VERTEX:
-            {
-                info.Target = GL_ARRAY_BUFFER;
-
-                break;
-            }
-            case Resources::BufferType::INDEX:
-            {
-                info.Target = GL_ELEMENT_ARRAY_BUFFER;
-
-                break;
-            }
-            case Resources::BufferType::CONSTANT:
-            {
-                info.Target = GL_UNIFORM_BUFFER;
-
-                break;
-            }
-            case Resources::BufferType::STORAGE:
-            {
-                info.Target = GL_SHADER_STORAGE_BUFFER;
-
-                break;
-            }
-        }
-
-        glNamedBufferData(info.ID, descriptor.Size, nullptr, info.Usage);
+        glNamedBufferData(info.ID, descriptor.Size, nullptr, GL_DYNAMIC_DRAW);
     }
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data)
     {
         OpenGLBufferData& info = mSpecifics->BufferData.Get(handle.ID);
 
-        glNamedBufferSubData(info.ID, data.Offset, data.Size, data.Data);
+        glNamedBufferSubData(info.ID, data.Offset, data.Stride, data.Data);
     }
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::DeleteBuffer(const Resources::BufferHandle& handle)

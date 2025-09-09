@@ -26,8 +26,8 @@ namespace Systems
 
     struct RendererDescriptor
     {
-        std::reference_wrapper<RendererContext> Context;
-        std::reference_wrapper<RendererWindow> Window;
+        RendererContext& Context;
+        RendererWindow& Window;
 
         RendererClearColour ClearColour = {0.0f, 0.0f, 0.0f, 1.0f};
         RendererVSyncMode VSyncMode = RendererVSyncMode::STRICT;
@@ -57,20 +57,20 @@ namespace Systems
         void Update();
 
         Resources::BufferHandle CreateBuffer(const Resources::BufferDescriptor& descriptor);
-        Resources::BufferDescriptor GetBufferInfo(const Resources::BufferHandle& handle);
+        Resources::BufferDescriptor GetBufferData(const Resources::BufferHandle& handle);
         void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
         void DeleteBuffer(const Resources::BufferHandle& handle);
 
-        Resources::PipelineHandle CreatePipeline(const Resources::PipelineDescriptor& descriptor);
-        Resources::PipelineDescriptor GetPipelineInfo(const Resources::PipelineHandle& handle);
+        Resources::PipelineHandle CreatePipeline(const Resources::RasterPipelineDescriptor& descriptor);
+        Resources::RasterPipelineDescriptor GetRasterPipelineInfo(const Resources::PipelineHandle& handle);
         void DeletePipeline(const Resources::PipelineHandle& handle);
 
         Resources::SubmissionHandle CreateSubmission(const Resources::SubmissionDescriptor& descriptor);
         Resources::SubmissionDescriptor GetSubmissionInfo(const Resources::SubmissionHandle& handle);
         void DeleteSubmission(const Resources::SubmissionHandle& handle);
 
-        RendererCommandBuffer CreateCommandBuffer();
-        void DrawCommandBuffer(const RendererCommandBuffer& buffer);
+        CommandBuffer CreateCommandBuffer();
+        void DrawCommandBuffer(const CommandBuffer& buffer);
 
         template <RendererAttribute A>
         const RendererAttributeType<A>::Type& Get() const;
@@ -79,16 +79,16 @@ namespace Systems
         void Set(const RendererAttributeType<A>::Type& value);
 
     private:
-        friend class RendererCommandBuffer;
+        friend class CommandBuffer;
 
-        std::reference_wrapper<RendererContext> mContext;
-        std::reference_wrapper<RendererWindow> mWindow;
+        RendererContext& mContext;
+        RendererWindow& mWindow;
 
         RendererClearColour mClearColour;
         RendererVSyncMode mVSyncMode;
 
         Types::SparseSet<Resources::BufferDescriptor> mBufferData;
-        Types::SparseSet<Resources::PipelineDescriptor> mPipelineData;
+        Types::SparseSet<Resources::RasterPipelineDescriptor> mRasterPipelineData;
         Types::SparseSet<Resources::SubmissionDescriptor> mSubmissionData;
 
         std::vector<std::size_t> mBufferGenerations;

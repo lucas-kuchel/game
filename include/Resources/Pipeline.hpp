@@ -3,6 +3,7 @@
 #include <Resources/Buffer.hpp>
 
 #include <cstdlib>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -49,11 +50,12 @@ namespace Resources
         DISABLED,
     };
 
-    struct PipelineDescriptor
+    struct RasterPipelineDescriptor
     {
         std::vector<ShaderDescriptor> Shaders;
-        std::vector<BufferAttributeDescriptor> VertexInput;
-        std::vector<BufferHandle> InputBuffers;
+
+        std::vector<BufferFormatDescriptor> DataBufferFormats;
+        std::vector<BufferFormatDescriptor> VertexBufferFormats;
 
         PipelinePrimitive Primitive;
         PipelineFrontFace FrontFace;
@@ -63,7 +65,17 @@ namespace Resources
 
     struct PipelineHandle
     {
-        std::size_t ID = 0;
+        std::size_t ID = std::numeric_limits<std::size_t>::max();
         std::size_t Generation = 0;
+
+        bool Valid() const
+        {
+            return ID != std::numeric_limits<std::size_t>::max();
+        }
+
+        bool Invalid() const
+        {
+            return ID == std::numeric_limits<std::size_t>::max();
+        }
     };
 }

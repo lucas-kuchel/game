@@ -4,7 +4,7 @@
 namespace Systems
 {
     RendererBackendImplementationSpecifics::RendererBackendImplementationSpecifics(const WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>& layer, RendererWindow& window)
-        : Layer(layer), Window(window)
+        : Window(window), Layer(layer)
     {
     }
 
@@ -354,9 +354,8 @@ namespace Systems
     RendererBackendImplementation<RendererBackend::OPENGL>::RendererBackendImplementation(const RendererDescriptor& descriptor)
         : mSpecifics(CreateSpecifics(descriptor))
     {
-        auto& window = mSpecifics->Window.get();
         auto& layer = mSpecifics->Layer;
-        auto& windowSize = window.Get<WindowAttribute::SIZE>();
+        auto& windowSize = mSpecifics->Window.Get<WindowAttribute::SIZE>();
         auto swapInterval = mSpecifics->GetSwapInterval(descriptor.VSyncMode);
 
         layer.MakeContextCurrent();
@@ -380,9 +379,8 @@ namespace Systems
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::Update()
     {
-        auto& window = mSpecifics->Window.get();
         auto& layer = mSpecifics->Layer;
-        auto& windowSize = window.Get<WindowAttribute::SIZE>();
+        auto& windowSize = mSpecifics->Window.Get<WindowAttribute::SIZE>();
 
         layer.SwapBuffers();
 
@@ -406,7 +404,7 @@ namespace Systems
 
     RendererBackendImplementationSpecifics* RendererBackendImplementation<RendererBackend::OPENGL>::CreateSpecifics(const RendererDescriptor& descriptor)
     {
-        auto& window = descriptor.Window.get();
+        auto& window = descriptor.Window;
 
         return new RendererBackendImplementationSpecifics(window.CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>(), window);
     }

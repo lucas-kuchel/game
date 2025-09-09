@@ -5,9 +5,9 @@
 
 namespace Systems
 {
-    void RendererBackendImplementation<RendererBackend::OPENGL>::CreatePipeline(const Resources::PipelineHandle& handle, const Resources::PipelineDescriptor& descriptor)
+    void RendererBackendImplementation<RendererBackend::OPENGL>::CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor)
     {
-        auto& info = mSpecifics->PipelineData.Insert(handle.ID, OpenGLPipelineData());
+        auto& info = mSpecifics->RasterPipelineData.Insert(handle.ID, OpenGLRasterPipelineData());
 
         info.ID = glCreateProgram();
         info.Descriptor = descriptor;
@@ -15,7 +15,7 @@ namespace Systems
         if (info.ID == 0)
         {
             throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
-                                   "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const PipelineDescriptor&):\n"
+                                   "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
                                    "general OpenGL error\n"
                                    "failed to create shader program");
         }
@@ -46,7 +46,7 @@ namespace Systems
 
         for (const auto& shaderDescriptor : descriptor.Shaders)
         {
-            GLenum type;
+            GLenum type = GL_INVALID_ENUM;
 
             switch (shaderDescriptor.Type)
             {
@@ -98,7 +98,7 @@ namespace Systems
                 }
 
                 throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
-                                       "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const PipelineDescriptor&):\n"
+                                       "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
                                        "OpenGL shader compilation error\n"
                                        "failed to compile OpenGL shader\n"
                                        "OpenGL compilation error info log:\n\n{}",
@@ -128,7 +128,7 @@ namespace Systems
             }
 
             throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
-                                   "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const PipelineDescriptor&):\n"
+                                   "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
                                    "OpenGL pipeline linking error\n"
                                    "failed to link OpenGL shader program\n"
                                    "OpenGL link error info log:\n\n{}",
@@ -143,7 +143,7 @@ namespace Systems
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::DeletePipeline(const Resources::PipelineHandle& handle)
     {
-        auto& info = mSpecifics->PipelineData.Get(handle.ID);
+        auto& info = mSpecifics->RasterPipelineData.Get(handle.ID);
 
         if (info.ID != 0)
         {
@@ -152,6 +152,6 @@ namespace Systems
             info.ID = 0;
         }
 
-        mSpecifics->PipelineData.Remove(handle.ID);
+        mSpecifics->RasterPipelineData.Remove(handle.ID);
     }
 }

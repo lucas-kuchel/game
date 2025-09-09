@@ -9,19 +9,17 @@ namespace Systems
     struct OpenGLBufferData
     {
         GLuint ID = 0;
-        GLuint Usage = 0;
-        GLuint Target = 0;
 
         Resources::BufferDescriptor Descriptor;
     };
 
-    struct OpenGLPipelineData
+    struct OpenGLRasterPipelineData
     {
         GLuint ID = 0;
 
         GLenum Primitive = GL_INVALID_ENUM;
 
-        Resources::PipelineDescriptor Descriptor;
+        Resources::RasterPipelineDescriptor Descriptor;
     };
 
     struct OpenGLSubmissionData
@@ -43,11 +41,12 @@ namespace Systems
     public:
         RendererBackendImplementationSpecifics(const WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>& layer, RendererWindow& window);
 
+        RendererWindow& Window;
+
         WindowInteractionLayer<WindowInteractive::OPENGL_LAYER> Layer;
-        std::reference_wrapper<RendererWindow> Window;
 
         Types::SparseSet<OpenGLBufferData> BufferData;
-        Types::SparseSet<OpenGLPipelineData> PipelineData;
+        Types::SparseSet<OpenGLRasterPipelineData> RasterPipelineData;
         Types::SparseSet<OpenGLSubmissionData> SubmissionData;
 
         int GetSwapInterval(RendererVSyncMode mode);

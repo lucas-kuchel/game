@@ -10,14 +10,18 @@
 
 #include <Game/BasicMesh.hpp>
 #include <Game/Camera.hpp>
+#include <Game/Player.hpp>
 #include <Game/Transform.hpp>
 
 namespace Game
 {
     using RegistryDescriptor = Systems::RegistryDescriptor<
         CameraComponent3D,
+        BasicMeshComponent,
+        ConstantBufferComponent,
+        RenderableComponent,
         TransformComponent3D,
-        BasicMeshComponent>;
+        PlayerComponent>;
 
     class Instance
     {
@@ -31,11 +35,12 @@ namespace Game
         Systems::Registry<RegistryDescriptor> mRegistry;
 
         Resources::PipelineHandle mBasicMeshPipeline;
+        Resources::BufferHandle mCameraBuffer;
 
         Systems::Context& mContext;
         Systems::Renderer& mRenderer;
         Systems::Window& mWindow;
 
-        void CreateBasicMeshPipeline(Resources::BufferHandle& cameraBuffer);
+        void CreateBasicMeshPipeline();
     };
 }

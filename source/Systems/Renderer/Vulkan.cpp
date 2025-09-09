@@ -41,7 +41,7 @@ namespace Systems
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::CreatePipeline(const Resources::PipelineHandle&, const Resources::PipelineDescriptor&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::CreatePipeline(const Resources::PipelineHandle&, const Resources::RasterPipelineDescriptor&)
     {
     }
 
@@ -57,19 +57,19 @@ namespace Systems
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::CreateCommandBuffer(const RendererCommandBuffer&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::CreateCommandBuffer(const CommandBuffer&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::SubmitToCommandBuffer(const RendererCommandBuffer&, const Resources::SubmissionHandle&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::SubmitToCommandBuffer(const CommandBuffer&, const Resources::SubmissionHandle&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::DrawCommandBuffer(const RendererCommandBuffer&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::DrawCommandBuffer(const CommandBuffer&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::DeleteCommandBuffer(const RendererCommandBuffer&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::DeleteCommandBuffer(const CommandBuffer&)
     {
     }
 
@@ -85,6 +85,6 @@ namespace Systems
 
     RendererBackendImplementationSpecifics* RendererBackendImplementation<RendererBackend::VULKAN>::CreateSpecifics(const RendererDescriptor& descriptor)
     {
-        return new RendererBackendImplementationSpecifics(descriptor.Window.get().CreateInteractionLayer<WindowInteractive::VULKAN_LAYER>());
+        return new RendererBackendImplementationSpecifics(descriptor.Window.CreateInteractionLayer<WindowInteractive::VULKAN_LAYER>());
     }
 }

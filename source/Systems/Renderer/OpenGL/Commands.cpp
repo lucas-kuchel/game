@@ -2,36 +2,62 @@
 
 namespace Systems
 {
-    void RendererBackendImplementation<RendererBackend::OPENGL>::CreateCommandBuffer(const RendererCommandBuffer&)
+    void RendererBackendImplementation<RendererBackend::OPENGL>::CreateCommandBuffer(const CommandBuffer&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::OPENGL>::SubmitToCommandBuffer(const RendererCommandBuffer&, const Resources::SubmissionHandle&)
+    void RendererBackendImplementation<RendererBackend::OPENGL>::SubmitToCommandBuffer(const CommandBuffer&, const Resources::SubmissionHandle&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::OPENGL>::DrawCommandBuffer(const RendererCommandBuffer& buffer)
+    void RendererBackendImplementation<RendererBackend::OPENGL>::DrawCommandBuffer(const CommandBuffer& buffer)
     {
         auto& submissions = buffer.GetContents();
 
         for (const auto& submission : submissions)
         {
             auto& submissionInfo = mSpecifics->SubmissionData.Get(submission.ID);
-            auto& pipelineInfo = mSpecifics->PipelineData.Get(submissionInfo.Descriptor.Pipeline.ID);
-            auto& bufferInfo = mSpecifics->BufferData.Get(submissionInfo.Descriptor.IndexBuffer.ID);
+            auto& pipelineInfo = mSpecifics->RasterPipelineData.Get(submissionInfo.Descriptor.Pipeline.ID);
+            auto& indexBufferInfo = mSpecifics->BufferData.Get(submissionInfo.Descriptor.IndexBuffer.ID);
 
-            auto typeSize = mSpecifics->GetTypeSize(bufferInfo.Descriptor.Attributes[0].Type);
-            auto typeInfo = mSpecifics->GetGLAttributeFormat(bufferInfo.Descriptor.Attributes[0].Type);
-            auto count = bufferInfo.Descriptor.Size / typeSize;
+            auto typeSize = mSpecifics->GetTypeSize(submissionInfo.Descriptor.IndexBufferType);
+            auto typeInfo = mSpecifics->GetGLAttributeFormat(submissionInfo.Descriptor.IndexBufferType);
+
+            auto count = indexBufferInfo.Descriptor.Size / typeSize;
 
             glUseProgram(pipelineInfo.ID);
             glBindVertexArray(submissionInfo.ID);
 
-            for (const auto& buffer : pipelineInfo.Descriptor.InputBuffers)
+            for (std::size_t i = 0; i < submissionInfo.Descriptor.DataBuffers.size(); i++)
             {
+                auto& buffer = submissionInfo.Descriptor.DataBuffers[i];
+                auto& format = pipelineInfo.Descriptor.DataBufferFormats[i];
+
                 auto& bufferData = mSpecifics->BufferData.Get(buffer.ID);
 
-                glBindBufferBase(bufferData.Target, bufferData.Descriptor.Slot, bufferData.ID);
+                GLenum target = GL_INVALID_ENUM;
+
+                switch (format.Type)
+                {
+                    case Resources::BufferType::CONSTANT:
+                    {
+                        target = GL_UNIFORM_BUFFER;
+
+                        break;
+                    }
+                    case Resources::BufferType::STORAGE:
+                    {
+                        target = GL_SHADER_STORAGE_BUFFER;
+
+                        break;
+                    }
+                    default:
+                    {
+                        throw Debug::Exception(Debug::ErrorCode::CONFLICT, "[UNREACHABLE]");
+                    }
+                }
+
+                glBindBufferBase(target, format.Index, bufferData.ID);
             }
 
             switch (pipelineInfo.Descriptor.FaceCulling)
@@ -100,7 +126,7 @@ namespace Systems
         }
     }
 
-    void RendererBackendImplementation<RendererBackend::OPENGL>::DeleteCommandBuffer(const RendererCommandBuffer&)
+    void RendererBackendImplementation<RendererBackend::OPENGL>::DeleteCommandBuffer(const CommandBuffer&)
     {
     }
 }
