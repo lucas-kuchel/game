@@ -3,13 +3,19 @@
 #include <Debug/Exception.hpp>
 #include <Systems/Context.hpp>
 
-#include <vulkan/vulkan.h>
-
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <glm/glm.hpp>
+
+struct VkInstance_T;
+using VkInstance = VkInstance_T*;
+
+struct VkSurfaceKHR_T;
+using VkSurfaceKHR = VkSurfaceKHR_T*;
+
+struct VkAllocationCallbacks;
 
 namespace Systems
 {
