@@ -43,14 +43,14 @@ namespace Systems
 
         RendererWindow& Window;
 
-        WindowInteractionLayer<WindowInteractive::OPENGL_LAYER> Layer;
+        WindowInteractionLayer<WindowInteractive::OPENGL_LAYER> OpenGLWindowLayer;
 
-        Types::SparseSet<OpenGLBufferData> BufferData;
-        Types::SparseSet<OpenGLRasterPipelineData> RasterPipelineData;
-        Types::SparseSet<OpenGLSubmissionData> SubmissionData;
+        Types::SparseSet<OpenGLBufferData> Buffers;
+        Types::SparseSet<OpenGLRasterPipelineData> RasterPipelines;
+        Types::SparseSet<OpenGLSubmissionData> Submissions;
 
         int GetSwapInterval(RendererVSyncMode mode);
-        OpenGLAttributeFormat GetGLAttributeFormat(Resources::BufferAttributeType type);
+        OpenGLAttributeFormat GetAttributeFormat(Resources::BufferAttributeType type);
         std::size_t GetTypeSize(Resources::BufferAttributeType type);
     };
 }

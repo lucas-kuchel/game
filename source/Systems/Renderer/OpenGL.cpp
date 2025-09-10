@@ -4,7 +4,7 @@
 namespace Systems
 {
     RendererBackendImplementationSpecifics::RendererBackendImplementationSpecifics(const WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>& layer, RendererWindow& window)
-        : Window(window), Layer(layer)
+        : Window(window), OpenGLWindowLayer(layer)
     {
     }
 
@@ -29,7 +29,7 @@ namespace Systems
         throw Debug::Exception(Debug::ErrorCode::NOT_IMPLEMENTED, "[UNREACHABLE]");
     }
 
-    OpenGLAttributeFormat RendererBackendImplementationSpecifics::GetGLAttributeFormat(Resources::BufferAttributeType type)
+    OpenGLAttributeFormat RendererBackendImplementationSpecifics::GetAttributeFormat(Resources::BufferAttributeType type)
     {
         switch (type)
         {
@@ -354,7 +354,7 @@ namespace Systems
     RendererBackendImplementation<RendererBackend::OPENGL>::RendererBackendImplementation(const RendererDescriptor& descriptor)
         : mSpecifics(CreateSpecifics(descriptor))
     {
-        auto& layer = mSpecifics->Layer;
+        auto& layer = mSpecifics->OpenGLWindowLayer;
         auto& windowSize = mSpecifics->Window.Get<WindowAttribute::SIZE>();
         auto swapInterval = mSpecifics->GetSwapInterval(descriptor.VSyncMode);
 
@@ -379,7 +379,7 @@ namespace Systems
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::Update()
     {
-        auto& layer = mSpecifics->Layer;
+        auto& layer = mSpecifics->OpenGLWindowLayer;
         auto& windowSize = mSpecifics->Window.Get<WindowAttribute::SIZE>();
 
         layer.SwapBuffers();
@@ -391,7 +391,7 @@ namespace Systems
     template <>
     void RendererBackendImplementation<RendererBackend::OPENGL>::Set<RendererAttribute::VSYNC_MODE>(const RendererAttributeType<RendererAttribute::VSYNC_MODE>::Type& value)
     {
-        auto& layer = mSpecifics->Layer;
+        auto& layer = mSpecifics->OpenGLWindowLayer;
 
         layer.SetSwapInterval(mSpecifics->GetSwapInterval(value));
     }

@@ -6,6 +6,7 @@ namespace Systems
     {
         OPENGL,
         VULKAN,
+        METAL,
     };
 
     enum class ContextAttribute

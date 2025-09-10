@@ -41,6 +41,7 @@ namespace Systems
     {
         OPENGL_LAYER,
         VULKAN_LAYER,
+        COCOA_LAYER,
 
         KEYBOARD_LAYER,
         MOUSE_LAYER,
@@ -211,6 +212,20 @@ namespace Systems
         VkSurfaceKHR CreateWindowSurface(VkInstance instance, const VkAllocationCallbacks* allocator = nullptr);
     };
 
+    template <>
+    class WindowInteractionLayer<WindowInteractive::COCOA_LAYER>
+    {
+    private:
+        friend class Window;
+
+        explicit WindowInteractionLayer(void* handle);
+
+        void* mHandle;
+
+    public:
+        void* GetCocoaWindow();
+    };
+
     struct InputState;
 
     template <>
@@ -307,6 +322,7 @@ namespace Systems
     private:
         void GL_Init();
         void VK_Init();
+        void MTL_Init();
 
         template <WindowInteractive I>
         void ValidateInteractionLayerRequest() const
@@ -317,7 +333,7 @@ namespace Systems
                 {
                     if (mContext.get().Get<ContextAttribute::RENDERER>() != RendererBackend::OPENGL)
                     {
-                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::OPENGL> Systems::Window::CreateInteractionLayer<WindowInteractive::OPENGL>():\n"
+                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::OPENGL> Systems::Window::CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }
@@ -329,6 +345,17 @@ namespace Systems
                     if (mContext.get().Get<ContextAttribute::RENDERER>() != RendererBackend::VULKAN)
                     {
                         throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::VULKAN>():\n"
+                                                                                   "invalid argument error\n"
+                                                                                   "context renderer API and interaction layer API do not match");
+                    }
+
+                    break;
+                }
+                case WindowInteractive::COCOA_LAYER:
+                {
+                    if (mContext.get().Get<ContextAttribute::RENDERER>() != RendererBackend::METAL)
+                    {
+                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::COCOA_LAYER>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }

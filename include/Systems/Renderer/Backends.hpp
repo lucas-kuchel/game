@@ -100,7 +100,42 @@ namespace Systems
         RendererBackendImplementationSpecifics* CreateSpecifics(const RendererDescriptor& descriptor);
     };
 
+    template <>
+    class RendererBackendImplementation<RendererBackend::METAL>
+    {
+    public:
+        RendererBackendImplementation(const RendererDescriptor& descriptor);
+        RendererBackendImplementation(RendererBackendImplementation&&) = default;
+        ~RendererBackendImplementation();
+
+        void Update();
+
+        void CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
+        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
+        void DeleteBuffer(const Resources::BufferHandle& handle);
+
+        void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
+        void DeletePipeline(const Resources::PipelineHandle& handle);
+
+        void CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
+        void DeleteSubmission(const Resources::SubmissionHandle& handle);
+
+        void CreateCommandBuffer(const CommandBuffer& buffer);
+        void SubmitToCommandBuffer(const CommandBuffer& buffer, const Resources::SubmissionHandle& submission);
+        void DrawCommandBuffer(const CommandBuffer& buffer);
+        void DeleteCommandBuffer(const CommandBuffer& buffer);
+
+        template <RendererAttribute A>
+        void Set(const RendererAttributeType<A>::Type& value);
+
+    private:
+        RendererBackendImplementationSpecifics* mSpecifics;
+
+        RendererBackendImplementationSpecifics* CreateSpecifics(const RendererDescriptor& descriptor);
+    };
+
     using RendererBackendVariant = std::variant<
         std::unique_ptr<RendererBackendImplementation<RendererBackend::OPENGL>>,
-        std::unique_ptr<RendererBackendImplementation<RendererBackend::VULKAN>>>;
+        std::unique_ptr<RendererBackendImplementation<RendererBackend::VULKAN>>,
+        std::unique_ptr<RendererBackendImplementation<RendererBackend::METAL>>>;
 }

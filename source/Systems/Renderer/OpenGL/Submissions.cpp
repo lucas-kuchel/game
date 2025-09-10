@@ -4,7 +4,7 @@ namespace Systems
 {
     void RendererBackendImplementation<RendererBackend::OPENGL>::CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor)
     {
-        auto& info = mSpecifics->SubmissionData.Insert(handle.ID, OpenGLSubmissionData());
+        auto& info = mSpecifics->Submissions.Insert(handle.ID, OpenGLSubmissionData());
 
         glCreateVertexArrays(1, &info.ID);
 
@@ -18,13 +18,13 @@ namespace Systems
 
         info.Descriptor = descriptor;
 
-        const auto& pipeline = mSpecifics->RasterPipelineData.Get(descriptor.Pipeline.ID);
+        const auto& pipeline = mSpecifics->RasterPipelines.Get(descriptor.Pipeline.ID);
 
         std::uint32_t bufferIndex = 0;
 
         for (const auto& vertexBuffer : descriptor.VertexBuffers)
         {
-            const auto& bufferInfo = mSpecifics->BufferData.Get(vertexBuffer.ID);
+            const auto& bufferInfo = mSpecifics->Buffers.Get(vertexBuffer.ID);
             const auto& format = pipeline.Descriptor.VertexBufferFormats[bufferIndex];
 
             std::size_t stride = 0;
@@ -41,7 +41,7 @@ namespace Systems
 
             for (const auto& attribute : format.Attributes)
             {
-                auto typeInfo = mSpecifics->GetGLAttributeFormat(attribute);
+                auto typeInfo = mSpecifics->GetAttributeFormat(attribute);
 
                 glEnableVertexArrayAttrib(info.ID, index);
 
@@ -62,14 +62,14 @@ namespace Systems
             bufferIndex++;
         }
 
-        const auto& indexBufferInfo = mSpecifics->BufferData.Get(descriptor.IndexBuffer.ID);
+        const auto& indexBufferInfo = mSpecifics->Buffers.Get(descriptor.IndexBuffer.ID);
 
         glVertexArrayElementBuffer(info.ID, indexBufferInfo.ID);
     }
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::DeleteSubmission(const Resources::SubmissionHandle& handle)
     {
-        auto& info = mSpecifics->SubmissionData.Get(handle.ID);
+        auto& info = mSpecifics->Submissions.Get(handle.ID);
 
         if (info.ID != 0)
         {
@@ -78,6 +78,6 @@ namespace Systems
             info.ID = 0;
         }
 
-        mSpecifics->SubmissionData.Remove(handle.ID);
+        mSpecifics->Submissions.Remove(handle.ID);
     }
 }

@@ -179,6 +179,12 @@ namespace Game
 
     void Instance::Update()
     {
+        static float time = 0;
+
+        mRenderer.Set<Systems::RendererAttribute::CLEAR_COLOUR>({-std::sin(time), std::cos(time), std::sin(time), 1.0});
+
+        time += 0.01;
+
         auto cameraBitmask = mRegistry.MakeBitmask<CameraComponent3D>();
         auto bufferBitmask = mRegistry.MakeBitmask<ConstantBufferComponent>();
         auto transformBitmask = mRegistry.MakeBitmask<TransformComponent3D>();
@@ -337,23 +343,29 @@ namespace Game
         };
 
         Resources::ShaderDescriptor vertexShaderDescriptor = {
-            .Type = Resources::ShaderType::VERTEX,
-            .Path = "assets/shaders/basic.vert",
+            .Stage = Resources::ShaderStage::VERTEX,
+            .SPIRVShaderPath = "assets/shaders/spv/basic.vertex.spv",
+            .MetalShaderPath = "assets/shaders/metal/basic.metallib",
+            .Function = "VSMain",
         };
 
         Resources::ShaderDescriptor pixelShaderDescriptor = {
-            .Type = Resources::ShaderType::PIXEL,
-            .Path = "assets/shaders/basic.frag",
+            .Stage = Resources::ShaderStage::PIXEL,
+            .SPIRVShaderPath = "assets/shaders/spv/basic.pixel.spv",
+            .MetalShaderPath = "assets/shaders/metal/basic.metallib",
+            .Function = "PSMain",
         };
 
         Resources::RasterPipelineDescriptor pipelineDescriptor = {
             .Shaders = {vertexShaderDescriptor, pixelShaderDescriptor},
             .DataBufferFormats = {cameraFormat},
             .VertexBufferFormats = {vertexFormat},
-            .Primitive = Resources::PipelinePrimitive::TRIANGLE_LIST,
-            .FrontFace = Resources::PipelineFrontFace::CLOCKWISE,
-            .PolygonMode = Resources::PipelinePolygonMode::SOLID,
-            .FaceCulling = Resources::PipelineFaceCulling::FRONTFACE,
+            .RasterState = {
+                .Primitive = Resources::PipelinePrimitive::TRIANGLE_LIST,
+                .FrontFace = Resources::PipelineFrontFace::CLOCKWISE,
+                .PolygonMode = Resources::PipelinePolygonMode::SOLID,
+                .FaceCulling = Resources::PipelineFaceCulling::FRONTFACE,
+            },
         };
 
         mBasicMeshPipeline = mRenderer.CreatePipeline(pipelineDescriptor);

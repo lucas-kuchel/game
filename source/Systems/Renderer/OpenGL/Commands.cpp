@@ -16,12 +16,12 @@ namespace Systems
 
         for (const auto& submission : submissions)
         {
-            auto& submissionInfo = mSpecifics->SubmissionData.Get(submission.ID);
-            auto& pipelineInfo = mSpecifics->RasterPipelineData.Get(submissionInfo.Descriptor.Pipeline.ID);
-            auto& indexBufferInfo = mSpecifics->BufferData.Get(submissionInfo.Descriptor.IndexBuffer.ID);
+            auto& submissionInfo = mSpecifics->Submissions.Get(submission.ID);
+            auto& pipelineInfo = mSpecifics->RasterPipelines.Get(submissionInfo.Descriptor.Pipeline.ID);
+            auto& indexBufferInfo = mSpecifics->Buffers.Get(submissionInfo.Descriptor.IndexBuffer.ID);
 
             auto typeSize = mSpecifics->GetTypeSize(submissionInfo.Descriptor.IndexBufferType);
-            auto typeInfo = mSpecifics->GetGLAttributeFormat(submissionInfo.Descriptor.IndexBufferType);
+            auto typeInfo = mSpecifics->GetAttributeFormat(submissionInfo.Descriptor.IndexBufferType);
 
             auto count = indexBufferInfo.Descriptor.Size / typeSize;
 
@@ -33,7 +33,7 @@ namespace Systems
                 auto& buffer = submissionInfo.Descriptor.DataBuffers[i];
                 auto& format = pipelineInfo.Descriptor.DataBufferFormats[i];
 
-                auto& bufferData = mSpecifics->BufferData.Get(buffer.ID);
+                auto& bufferData = mSpecifics->Buffers.Get(buffer.ID);
 
                 GLenum target = GL_INVALID_ENUM;
 
@@ -60,7 +60,7 @@ namespace Systems
                 glBindBufferBase(target, format.Index, bufferData.ID);
             }
 
-            switch (pipelineInfo.Descriptor.FaceCulling)
+            switch (pipelineInfo.Descriptor.RasterState.FaceCulling)
             {
                 case Resources::PipelineFaceCulling::BACKFACE:
                 {
@@ -84,7 +84,7 @@ namespace Systems
                 }
             }
 
-            switch (pipelineInfo.Descriptor.FrontFace)
+            switch (pipelineInfo.Descriptor.RasterState.FrontFace)
             {
                 case Resources::PipelineFrontFace::CLOCKWISE:
                 {
@@ -100,7 +100,7 @@ namespace Systems
                 }
             }
 
-            switch (pipelineInfo.Descriptor.PolygonMode)
+            switch (pipelineInfo.Descriptor.RasterState.PolygonMode)
             {
                 case Resources::PipelinePolygonMode::SOLID:
                 {

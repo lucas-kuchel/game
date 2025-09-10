@@ -6,6 +6,12 @@
 
 #include <GLFW/glfw3.h>
 
+#if defined(PLATFORM_APPLE)
+#define GLFW_EXPOSE_NATIVE_COCOA
+
+#include <GLFW/glfw3native.h>
+#endif
+
 #include <cstring>
 
 namespace Systems
@@ -510,6 +516,12 @@ namespace Systems
 
                 break;
             }
+            case RendererBackend::METAL:
+            {
+                MTL_Init();
+
+                break;
+            }
         }
 
         mHandle = glfwCreateWindow(mSize[0], mSize[1], mTitle.c_str(), nullptr, nullptr);
@@ -713,6 +725,11 @@ namespace Systems
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     }
 
+    void Window::MTL_Init()
+    {
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    }
+
     void WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>::MakeContextCurrent()
     {
         glfwMakeContextCurrent(static_cast<GLFWwindow*>(mHandle));
@@ -761,6 +778,25 @@ namespace Systems
         }
 
         return surface;
+    }
+
+    WindowInteractionLayer<WindowInteractive::COCOA_LAYER>::WindowInteractionLayer(void* handle)
+        : mHandle(handle)
+    {
+    }
+
+    void* WindowInteractionLayer<WindowInteractive::COCOA_LAYER>::GetCocoaWindow()
+    {
+#if defined(PLATFORM_APPLE)
+        return glfwGetCocoaWindow(static_cast<GLFWwindow*>(mHandle));
+#endif
+
+        throw Debug::Exception(Debug::ErrorCode::PERMISSION_DENIED,
+                               "void* Systems::WindowInteractionLayer<WindowInteractive::COCOA_LAYER>::GetCocoaWindow():\n"
+                               "permission denied\n"
+                               "current platform does not support WindowInteractionLayer<COCOA_LAYER>\n"
+                               " WindowInteractionLayer<COCOA_LAYER> is available for:\n"
+                               "\t- macOS");
     }
 
     WindowInteractionLayer<WindowInteractive::KEYBOARD_LAYER>::WindowInteractionLayer(void* handle)

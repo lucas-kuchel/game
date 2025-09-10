@@ -9,7 +9,7 @@
 
 namespace Resources
 {
-    enum class ShaderType
+    enum class ShaderStage
     {
         VERTEX,
         PIXEL,
@@ -18,9 +18,11 @@ namespace Resources
 
     struct ShaderDescriptor
     {
-        ShaderType Type;
+        ShaderStage Stage;
 
-        std::string Path;
+        std::string SPIRVShaderPath;
+        std::string MetalShaderPath;
+        std::string Function;
     };
 
     enum class PipelinePrimitive
@@ -50,6 +52,14 @@ namespace Resources
         DISABLED,
     };
 
+    struct PipelineRasterState
+    {
+        PipelinePrimitive Primitive;
+        PipelineFrontFace FrontFace;
+        PipelinePolygonMode PolygonMode;
+        PipelineFaceCulling FaceCulling;
+    };
+
     struct RasterPipelineDescriptor
     {
         std::vector<ShaderDescriptor> Shaders;
@@ -57,10 +67,7 @@ namespace Resources
         std::vector<BufferFormatDescriptor> DataBufferFormats;
         std::vector<BufferFormatDescriptor> VertexBufferFormats;
 
-        PipelinePrimitive Primitive;
-        PipelineFrontFace FrontFace;
-        PipelinePolygonMode PolygonMode;
-        PipelineFaceCulling FaceCulling;
+        PipelineRasterState RasterState;
     };
 
     struct PipelineHandle

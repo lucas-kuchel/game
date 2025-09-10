@@ -72,6 +72,10 @@ namespace Systems
             {
                 return std::make_unique<RendererBackendImplementation<RendererBackend::VULKAN>>(descriptor);
             }
+            case RendererBackend::METAL:
+            {
+                return std::make_unique<RendererBackendImplementation<RendererBackend::METAL>>(descriptor);
+            }
         }
 
         throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Systems::Renderer::Renderer(const RendererDescriptor&):\n"

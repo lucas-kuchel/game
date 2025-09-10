@@ -7,7 +7,7 @@ namespace Systems
 {
     void RendererBackendImplementation<RendererBackend::OPENGL>::CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor)
     {
-        auto& info = mSpecifics->RasterPipelineData.Insert(handle.ID, OpenGLRasterPipelineData());
+        auto& info = mSpecifics->RasterPipelines.Insert(handle.ID, OpenGLRasterPipelineData());
 
         info.ID = glCreateProgram();
         info.Descriptor = descriptor;
@@ -20,7 +20,7 @@ namespace Systems
                                    "failed to create shader program");
         }
 
-        switch (descriptor.Primitive)
+        switch (descriptor.RasterState.Primitive)
         {
             case Resources::PipelinePrimitive::TRIANGLE_LIST:
             {
@@ -48,21 +48,21 @@ namespace Systems
         {
             GLenum type = GL_INVALID_ENUM;
 
-            switch (shaderDescriptor.Type)
+            switch (shaderDescriptor.Stage)
             {
-                case Resources::ShaderType::VERTEX:
+                case Resources::ShaderStage::VERTEX:
                 {
                     type = GL_VERTEX_SHADER;
 
                     break;
                 }
-                case Resources::ShaderType::PIXEL:
+                case Resources::ShaderStage::PIXEL:
                 {
                     type = GL_FRAGMENT_SHADER;
 
                     break;
                 }
-                case Resources::ShaderType::GEOMETRY:
+                case Resources::ShaderStage::GEOMETRY:
                 {
                     type = GL_GEOMETRY_SHADER;
 
@@ -71,16 +71,40 @@ namespace Systems
             }
 
             std::uint32_t shader = glCreateShader(type);
-            std::ifstream file(shaderDescriptor.Path);
-            std::string buffer((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            std::int32_t compiled = 0;
+            std::ifstream file(shaderDescriptor.SPIRVShaderPath, std::ios::binary | std::ios::ate);
+
+            if (!file)
+            {
+                throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
+                                       "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
+                                       "OpenGL shader loading error\n"
+                                       "failed to load SPIR-V shader from file (path = {})\n"
+                                       "file doesn't exist or permissions do not allow for reading",
+                                       shaderDescriptor.SPIRVShaderPath);
+            }
+
+            std::streamsize size = file.tellg();
+            file.seekg(0, std::ios::beg);
+
+            std::vector<std::uint8_t> bytecode(size);
+
+            if (!file.read(reinterpret_cast<char*>(bytecode.data()), size))
+            {
+                throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
+                                       "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
+                                       "OpenGL shader loading error\n"
+                                       "failed to load SPIR-V shader from file (path = {})",
+                                       "permissions do not allow for reading or external process terminated stream",
+                                       shaderDescriptor.SPIRVShaderPath);
+            }
 
             shaders.push_back(shader);
 
-            const char* source = buffer.c_str();
+            std::int32_t compiled = 0;
 
-            glShaderSource(shader, 1, &source, nullptr);
-            glCompileShader(shader);
+            glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, bytecode.data(), bytecode.size() * sizeof(std::uint32_t));
+            glSpecializeShader(shader, shaderDescriptor.Function.c_str(), 0, nullptr, nullptr);
+            glAttachShader(info.ID, shader);
             glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 
             if (compiled == GL_FALSE)
@@ -100,7 +124,7 @@ namespace Systems
                 throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
                                        "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
                                        "OpenGL shader compilation error\n"
-                                       "failed to compile OpenGL shader\n"
+                                       "failed to compile shader\n"
                                        "OpenGL compilation error info log:\n\n{}",
                                        log.data());
             }
@@ -143,7 +167,7 @@ namespace Systems
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::DeletePipeline(const Resources::PipelineHandle& handle)
     {
-        auto& info = mSpecifics->RasterPipelineData.Get(handle.ID);
+        auto& info = mSpecifics->RasterPipelines.Get(handle.ID);
 
         if (info.ID != 0)
         {
@@ -152,6 +176,6 @@ namespace Systems
             info.ID = 0;
         }
 
-        mSpecifics->RasterPipelineData.Remove(handle.ID);
+        mSpecifics->RasterPipelines.Remove(handle.ID);
     }
 }

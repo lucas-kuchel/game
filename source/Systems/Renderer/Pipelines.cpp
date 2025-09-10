@@ -38,9 +38,9 @@ namespace Systems
 
         for (const auto& shaderDescriptor : descriptor.Shaders)
         {
-            switch (shaderDescriptor.Type)
+            switch (shaderDescriptor.Stage)
             {
-                case Resources::ShaderType::VERTEX:
+                case Resources::ShaderStage::VERTEX:
                 {
                     if (vertexFound)
                     {
@@ -55,7 +55,7 @@ namespace Systems
 
                     break;
                 }
-                case Resources::ShaderType::PIXEL:
+                case Resources::ShaderStage::PIXEL:
                 {
                     if (pixelFound)
                     {
@@ -70,7 +70,7 @@ namespace Systems
 
                     break;
                 }
-                case Resources::ShaderType::GEOMETRY:
+                case Resources::ShaderStage::GEOMETRY:
                 {
                     if (geometryFound)
                     {
