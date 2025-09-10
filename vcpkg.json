@@ -5,6 +5,7 @@
         "glfw3",
         "glew",
         "vulkan-headers",
-        "glm"
+        "glm",
+        "spirv-cross"
     ]
 }

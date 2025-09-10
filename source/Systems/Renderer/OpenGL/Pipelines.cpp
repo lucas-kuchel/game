@@ -102,9 +102,8 @@ namespace Systems
 
             std::int32_t compiled = 0;
 
-            glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, bytecode.data(), bytecode.size() * sizeof(std::uint32_t));
+            glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, bytecode.data(), bytecode.size());
             glSpecializeShader(shader, shaderDescriptor.Function.c_str(), 0, nullptr, nullptr);
-            glAttachShader(info.ID, shader);
             glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 
             if (compiled == GL_FALSE)

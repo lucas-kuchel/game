@@ -12,7 +12,9 @@ namespace Systems
 {
     struct MetalBufferData
     {
+#if defined(PLATFORM_APPLE)
         id<MTLBuffer> Handle = nil;
+#endif
     };
 
     struct MetalPipelineData

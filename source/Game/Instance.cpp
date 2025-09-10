@@ -179,12 +179,6 @@ namespace Game
 
     void Instance::Update()
     {
-        static float time = 0;
-
-        mRenderer.Set<Systems::RendererAttribute::CLEAR_COLOUR>({-std::sin(time), std::cos(time), std::sin(time), 1.0});
-
-        time += 0.01;
-
         auto cameraBitmask = mRegistry.MakeBitmask<CameraComponent3D>();
         auto bufferBitmask = mRegistry.MakeBitmask<ConstantBufferComponent>();
         auto transformBitmask = mRegistry.MakeBitmask<TransformComponent3D>();

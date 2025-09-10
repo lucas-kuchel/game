@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(game LANGUAGES CXX)
+project(game LANGUAGES CXX OBJCXX)
 
 file(GLOB_RECURSE SOURCES "source/*.cpp" "source/*.mm")
 
@@ -36,6 +36,11 @@ target_sources(game PRIVATE ${SOURCES})
 
 target_include_directories(game PRIVATE "include")
 
+if(UNIX AND NOT APPLE)
+    find_library(OBJC_RUNTIME objc REQUIRED)
+    target_link_libraries(game PRIVATE ${OBJC_RUNTIME})
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(game PRIVATE DEBUG_BUILD_TYPE)
 endif()
@@ -48,6 +53,4 @@ if(APPLE)
     target_compile_definitions(game PRIVATE PLATFORM_APPLE)
 elseif(WIN32)
     target_compile_definitions(game PRIVATE PLATFORM_WINDOWS)
-else()
-    target_compile_definitions(game PRIVATE PLATFORM_UNKNOWN)
 endif()

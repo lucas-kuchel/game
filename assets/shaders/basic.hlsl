@@ -6,8 +6,8 @@ cbuffer Camera : register(b0)
 
 struct VSInput
 {
-    float3 Position : POSITION, LOCATION0;
-    float4 Colour   : COLOR0, LOCATION1;  
+    float3 Position : POSITION;
+    float4 Colour   : COLOR0;  
 };
 
 struct VSOutput
