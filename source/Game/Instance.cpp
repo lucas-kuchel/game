@@ -69,41 +69,27 @@ namespace Game
                 for (auto [entity, mesh] : mRegistry.GetEntityView<BasicMeshComponent>(archetype))
                 {
                     mesh.Vertices = {
-                        // Front face (like your quad)
-                        BasicMeshVertex{{-0.5, -0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}}, // v0
-                        BasicMeshVertex{{0.5, -0.5, 0.5}, {0.5, 1.0, 0.5, 1.0}},  // v1
-                        BasicMeshVertex{{0.5, 0.5, 0.5}, {0.0, 0.5, 1.0, 1.0}},   // v2
-                        BasicMeshVertex{{-0.5, 0.5, 0.5}, {0.0, 0.0, 0.5, 1.0}},  // v3
-
-                        // Back face (flipped color pattern: v1 blue → v3 red)
-                        BasicMeshVertex{{-0.5, -0.5, -0.5}, {0.0, 1.0, 1.0, 1.0}}, // v4 - cyan
-                        BasicMeshVertex{{0.5, -0.5, -0.5}, {1.0, 0.0, 1.0, 1.0}},  // v5 - magenta
-                        BasicMeshVertex{{0.5, 0.5, -0.5}, {1.0, 1.0, 0.0, 1.0}},   // v6 - yellow
-                        BasicMeshVertex{{-0.5, 0.5, -0.5}, {1.0, 1.0, 1.0, 1.0}},  // v7 - white
+                        BasicMeshVertex{{-0.5, -0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
+                        BasicMeshVertex{{0.5, -0.5, 0.5}, {0.5, 1.0, 0.5, 1.0}},
+                        BasicMeshVertex{{0.5, 0.5, 0.5}, {0.0, 0.5, 1.0, 1.0}},
+                        BasicMeshVertex{{-0.5, 0.5, 0.5}, {0.0, 0.0, 0.5, 1.0}},
+                        BasicMeshVertex{{-0.5, -0.5, -0.5}, {0.0, 1.0, 1.0, 1.0}},
+                        BasicMeshVertex{{0.5, -0.5, -0.5}, {1.0, 0.0, 1.0, 1.0}},
+                        BasicMeshVertex{{0.5, 0.5, -0.5}, {1.0, 1.0, 0.0, 1.0}},
+                        BasicMeshVertex{{-0.5, 0.5, -0.5}, {1.0, 1.0, 1.0, 1.0}},
                     };
 
                     mesh.Triangles = {
-                        // Front face
                         {0, 1, 2},
                         {0, 2, 3},
-
-                        // Back face
                         {4, 6, 5},
                         {4, 7, 6},
-
-                        // Left face
                         {4, 0, 3},
                         {4, 3, 7},
-
-                        // Right face
                         {1, 5, 6},
                         {1, 6, 2},
-
-                        // Bottom face
                         {4, 5, 1},
                         {4, 1, 0},
-
-                        // Top face
                         {3, 2, 6},
                         {3, 6, 7},
                     };
@@ -287,11 +273,11 @@ namespace Game
             {
                 for (auto [entity, camera, buffer] : mRegistry.GetEntityView<CameraComponent3D, ConstantBufferComponent>(archetype))
                 {
-                    camera.Projection = glm::perspective(glm::radians(camera.FOV), camera.Aspect, camera.NearPlane, camera.FarPlane);
+                    camera.Projection = glm::perspectiveRH_ZO(glm::radians(camera.FOV), camera.Aspect, camera.NearPlane, camera.FarPlane);
 
                     std::array<glm::fmat4, 2> data = {
-                        camera.Projection,
-                        camera.View,
+                        glm::mat4(1.0f),
+                        glm::mat4(1.0f),
                     };
 
                     Resources::BufferData bufferData = {
@@ -323,7 +309,7 @@ namespace Game
                 Resources::BufferAttributeType::R32G32B32_FLOAT,
                 Resources::BufferAttributeType::R32G32B32A32_FLOAT,
             },
-            .Index = 0,
+            .Index = 1,
             .Type = Resources::BufferType::VERTEX,
         };
 
@@ -338,15 +324,13 @@ namespace Game
 
         Resources::ShaderDescriptor vertexShaderDescriptor = {
             .Stage = Resources::ShaderStage::VERTEX,
-            .SPIRVShaderPath = "assets/shaders/spv/basic.vertex.spv",
-            .MetalShaderPath = "assets/shaders/metal/basic.metallib",
+            .Path = "assets/shaders/basic.hlsl",
             .Function = "VSMain",
         };
 
         Resources::ShaderDescriptor pixelShaderDescriptor = {
             .Stage = Resources::ShaderStage::PIXEL,
-            .SPIRVShaderPath = "assets/shaders/spv/basic.pixel.spv",
-            .MetalShaderPath = "assets/shaders/metal/basic.metallib",
+            .Path = "assets/shaders/basic.hlsl",
             .Function = "PSMain",
         };
 
@@ -358,7 +342,7 @@ namespace Game
                 .Primitive = Resources::PipelinePrimitive::TRIANGLE_LIST,
                 .FrontFace = Resources::PipelineFrontFace::CLOCKWISE,
                 .PolygonMode = Resources::PipelinePolygonMode::SOLID,
-                .FaceCulling = Resources::PipelineFaceCulling::FRONTFACE,
+                .FaceCulling = Resources::PipelineFaceCulling::DISABLED,
             },
         };
 

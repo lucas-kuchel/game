@@ -6,6 +6,8 @@ namespace Systems
         : mContext(descriptor.Context), mWindow(descriptor.Window), mClearColour(descriptor.ClearColour),
           mVSyncMode(descriptor.VSyncMode), mBackend(CreateBackend(descriptor))
     {
+        std::visit([this](auto& backend)
+                   { backend->template Set<RendererAttribute::CLEAR_COLOUR>(mClearColour); }, mBackend);
     }
 
     Renderer::~Renderer()

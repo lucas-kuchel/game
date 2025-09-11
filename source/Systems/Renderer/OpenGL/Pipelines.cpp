@@ -5,6 +5,37 @@
 
 namespace Systems
 {
+    std::string GetGLSLShaderPath(const std::string_view& hlslPath, Resources::ShaderStage stage)
+    {
+        namespace fs = std::filesystem;
+
+        fs::path baseOutDir = fs::path(hlslPath).replace_extension();
+
+        std::string stageStr;
+        switch (stage)
+        {
+            case Resources::ShaderStage::VERTEX:
+                stageStr = "vertex";
+                break;
+            case Resources::ShaderStage::PIXEL:
+                stageStr = "pixel";
+                break;
+            case Resources::ShaderStage::GEOMETRY:
+                stageStr = "geometry";
+                break;
+            default:
+                stageStr = "unknown";
+                break;
+        }
+
+        fs::path glslDir = baseOutDir / "glsl";
+
+        std::string basename = fs::path(hlslPath).stem().string();
+        fs::path glslFile = glslDir / (basename + "." + stageStr + ".glsl");
+
+        return glslFile.string();
+    }
+
     void RendererBackendImplementation<RendererBackend::OPENGL>::CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor)
     {
         auto& info = mSpecifics->RasterPipelines.Insert(handle.ID, OpenGLRasterPipelineData());
@@ -70,40 +101,44 @@ namespace Systems
                 }
             }
 
+            std::string shaderPath = GetGLSLShaderPath(shaderDescriptor.Path, shaderDescriptor.Stage);
+
             std::uint32_t shader = glCreateShader(type);
-            std::ifstream file(shaderDescriptor.SPIRVShaderPath, std::ios::binary | std::ios::ate);
+            std::ifstream file(shaderPath, std::ios::ate);
 
             if (!file)
             {
                 throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
                                        "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
                                        "OpenGL shader loading error\n"
-                                       "failed to load SPIR-V shader from file (path = {})\n"
+                                       "failed to load GLSL shader from file (path = {})\n"
                                        "file doesn't exist or permissions do not allow for reading",
-                                       shaderDescriptor.SPIRVShaderPath);
+                                       shaderPath);
             }
 
             std::streamsize size = file.tellg();
             file.seekg(0, std::ios::beg);
 
-            std::vector<std::uint8_t> bytecode(size);
+            std::string buffer(size, '\0');
 
-            if (!file.read(reinterpret_cast<char*>(bytecode.data()), size))
+            if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
             {
                 throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
                                        "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const RasterPipelineDescriptor&):\n"
                                        "OpenGL shader loading error\n"
-                                       "failed to load SPIR-V shader from file (path = {})",
+                                       "failed to load GLSL shader from file (path = {})",
                                        "permissions do not allow for reading or external process terminated stream",
-                                       shaderDescriptor.SPIRVShaderPath);
+                                       shaderPath);
             }
 
             shaders.push_back(shader);
 
             std::int32_t compiled = 0;
 
-            glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, bytecode.data(), bytecode.size());
-            glSpecializeShader(shader, shaderDescriptor.Function.c_str(), 0, nullptr, nullptr);
+            const char* source = buffer.c_str();
+
+            glShaderSource(shader, 1, &source, nullptr);
+            glCompileShader(shader);
             glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 
             if (compiled == GL_FALSE)

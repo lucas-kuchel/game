@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <limits>
-#include <string>
+#include <string_view>
 #include <vector>
 
 namespace Resources
@@ -20,9 +20,8 @@ namespace Resources
     {
         ShaderStage Stage;
 
-        std::string SPIRVShaderPath;
-        std::string MetalShaderPath;
-        std::string Function;
+        std::string_view Path;
+        std::string_view Function;
     };
 
     enum class PipelinePrimitive
