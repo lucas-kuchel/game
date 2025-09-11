@@ -149,8 +149,10 @@ namespace Systems
                                                                        "provided pipeline does not exist");
         }
 
+        auto& info = mRasterPipelineData.Get(handle.ID);
+
         std::visit([&](auto& backend)
-                   { backend->DeletePipeline(handle); }, mBackend);
+                   { backend->DeletePipeline(handle, info); }, mBackend);
 
         mPipelineGenerations[handle.ID]++;
         mPipelineFreeList.push_back(handle.ID);

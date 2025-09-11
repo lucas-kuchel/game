@@ -1,14 +1,21 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(game LANGUAGES CXX OBJCXX)
+project(game LANGUAGES CXX)
 
-file(GLOB_RECURSE SOURCES "source/*.cpp" "source/*.mm")
+file(GLOB_RECURSE SOURCES "source/*.cpp")
 
 find_package(VulkanHeaders CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(spirv_cross_core CONFIG REQUIRED)
+find_package(spirv_cross_glsl CONFIG REQUIRED)
 
+if (APPLE)
+    find_library(METAL_FRAMEWORK Metal)
+    find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+endif()
+  
 add_executable(game)
 
 target_compile_options(game PRIVATE
@@ -21,25 +28,18 @@ target_link_libraries(game PRIVATE
     GLEW::GLEW
     Vulkan::Headers
     glm::glm
+    spirv-cross-core
+    spirv-cross-cpp
+    spirv-cross-glsl
 )
 
 if(APPLE)
-    find_library(METAL_FRAMEWORK Metal)
-    find_library(QUARTZCORE_FRAMEWORK QuartzCore)
-    target_link_libraries(game PRIVATE
-        ${METAL_FRAMEWORK}
-        ${QUARTZCORE_FRAMEWORK}
-    )
+    target_link_libraries(game PRIVATE ${METAL_FRAMEWORK} ${QUARTZCORE_FRAMEWORK})
 endif()
 
 target_sources(game PRIVATE ${SOURCES})
 
 target_include_directories(game PRIVATE "include")
-
-if(UNIX AND NOT APPLE)
-    find_library(OBJC_RUNTIME objc REQUIRED)
-    target_link_libraries(game PRIVATE ${OBJC_RUNTIME})
-endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(game PRIVATE DEBUG_BUILD_TYPE)

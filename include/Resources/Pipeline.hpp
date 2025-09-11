@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <limits>
-#include <string_view>
+#include <string>
 #include <vector>
 
 namespace Resources
@@ -20,8 +20,16 @@ namespace Resources
     {
         ShaderStage Stage;
 
-        std::string_view Path;
-        std::string_view Function;
+        std::vector<BufferFormatDescriptor> ConstantBufferFormats;
+        std::vector<BufferFormatDescriptor> StorageBufferFormats;
+
+        std::string Path;
+        std::string Function;
+
+        bool operator<(const ShaderDescriptor& other) const
+        {
+            return Stage < other.Stage;
+        }
     };
 
     enum class PipelinePrimitive
@@ -63,7 +71,6 @@ namespace Resources
     {
         std::vector<ShaderDescriptor> Shaders;
 
-        std::vector<BufferFormatDescriptor> DataBufferFormats;
         std::vector<BufferFormatDescriptor> VertexBufferFormats;
 
         PipelineRasterState RasterState;

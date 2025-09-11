@@ -8,9 +8,22 @@
 
 namespace Resources
 {
+    struct ShaderStageSubmissionDescriptor
+    {
+        std::vector<BufferHandle> ConstantBuffers;
+        std::vector<BufferHandle> StorageBuffers;
+
+        ShaderStage Stage;
+
+        bool operator<(const ShaderStageSubmissionDescriptor& other) const
+        {
+            return Stage < other.Stage;
+        }
+    };
+
     struct SubmissionDescriptor
     {
-        std::vector<BufferHandle> DataBuffers;
+        std::vector<ShaderStageSubmissionDescriptor> ShaderStages;
         std::vector<BufferHandle> VertexBuffers;
 
         BufferHandle IndexBuffer;

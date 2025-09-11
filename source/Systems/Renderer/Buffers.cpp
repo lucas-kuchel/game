@@ -64,7 +64,7 @@ namespace Systems
         }
 
         std::visit([&](auto& backend)
-                   { backend->SetBufferData(handle, data); }, mBackend);
+                   { backend->SetBufferData(handle, info, data); }, mBackend);
     }
 
     void Renderer::DeleteBuffer(const Resources::BufferHandle& handle)
@@ -77,8 +77,10 @@ namespace Systems
                                    "provided buffer does not exist");
         }
 
+        auto& info = mBufferData.Get(handle.ID);
+
         std::visit([&](auto& backend)
-                   { backend->DeleteBuffer(handle); }, mBackend);
+                   { backend->DeleteBuffer(handle, info); }, mBackend);
 
         mBufferGenerations[handle.ID]++;
         mBufferFreeList.push_back(handle.ID);

@@ -2,31 +2,60 @@
 
 namespace Systems
 {
-    Resources::SubmissionHandle Renderer::CreateSubmission(const Resources::SubmissionDescriptor& descriptor)
+    Resources::SubmissionHandle Renderer::CreateSubmission(Resources::SubmissionDescriptor& descriptor)
     {
         if (!mRasterPipelineData.Contains(descriptor.Pipeline.ID) || mPipelineGenerations[descriptor.Pipeline.ID] != descriptor.Pipeline.Generation)
         {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(const Resources::SubmissionDescriptor&):\n"
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(Resources::SubmissionDescriptor&):\n"
                                                                        "invalid argument\n"
                                                                        "provided pipeline does not exist");
         }
 
         auto& pipelineData = mRasterPipelineData.Get(descriptor.Pipeline.ID);
         auto& vertexAttributes = pipelineData.VertexBufferFormats;
-        auto& dataAttributes = pipelineData.DataBufferFormats;
 
         if (vertexAttributes.size() != descriptor.VertexBuffers.size())
         {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(const Resources::SubmissionDescriptor&):\n"
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(Resources::SubmissionDescriptor&):\n"
                                                                        "invalid argument\n"
                                                                        "mismatch between vertex buffer formats and vertex buffer handles");
         }
 
-        if (dataAttributes.size() != descriptor.DataBuffers.size())
+        if (pipelineData.Shaders.size() != descriptor.ShaderStages.size())
         {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(const Resources::SubmissionDescriptor&):\n"
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(Resources::SubmissionDescriptor&):\n"
                                                                        "invalid argument\n"
-                                                                       "mismatch between data buffer formats and data buffer handles");
+                                                                       "mismatch between pipeline shader stages and submission shader inputs");
+        }
+
+        std::sort(pipelineData.Shaders.begin(), pipelineData.Shaders.end());
+        std::sort(descriptor.ShaderStages.begin(), descriptor.ShaderStages.end());
+
+        for (std::size_t i = 0; i < pipelineData.Shaders.size(); i++)
+        {
+            auto& shaderDescriptor = pipelineData.Shaders[i];
+            auto& shaderSubmissions = descriptor.ShaderStages[i];
+
+            if (shaderDescriptor.Stage != shaderSubmissions.Stage)
+            {
+                throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(Resources::SubmissionDescriptor&):\n"
+                                                                           "invalid argument\n"
+                                                                           "shader stages do not match");
+            }
+
+            if (shaderDescriptor.ConstantBufferFormats.size() != shaderSubmissions.ConstantBuffers.size())
+            {
+                throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(Resources::SubmissionDescriptor&):\n"
+                                                                           "invalid argument\n"
+                                                                           "mismatch between storage buffer formats and storage buffer handles");
+            }
+
+            if (shaderDescriptor.StorageBufferFormats.size() != shaderSubmissions.StorageBuffers.size())
+            {
+                throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Resources::SubmissionHandle Systems::Renderer::CreateSubmission(Resources::SubmissionDescriptor&):\n"
+                                                                           "invalid argument\n"
+                                                                           "mismatch between storage buffer formats and storage buffer handles");
+            }
         }
 
         Resources::SubmissionHandle handle;
@@ -72,8 +101,10 @@ namespace Systems
                                                                        "submission does not exist");
         }
 
+        auto& info = mSubmissionData.Get(handle.ID);
+
         std::visit([&](auto& backend)
-                   { backend->DeleteSubmission(handle); }, mBackend);
+                   { backend->DeleteSubmission(handle, info); }, mBackend);
 
         mSubmissionGenerations[handle.ID]++;
         mSubmissionFreeList.push_back(handle.ID);

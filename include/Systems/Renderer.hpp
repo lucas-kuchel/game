@@ -65,7 +65,7 @@ namespace Systems
         Resources::RasterPipelineDescriptor GetRasterPipelineInfo(const Resources::PipelineHandle& handle);
         void DeletePipeline(const Resources::PipelineHandle& handle);
 
-        Resources::SubmissionHandle CreateSubmission(const Resources::SubmissionDescriptor& descriptor);
+        Resources::SubmissionHandle CreateSubmission(Resources::SubmissionDescriptor& descriptor);
         Resources::SubmissionDescriptor GetSubmissionInfo(const Resources::SubmissionHandle& handle);
         void DeleteSubmission(const Resources::SubmissionHandle& handle);
 

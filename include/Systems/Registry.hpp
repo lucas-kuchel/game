@@ -22,7 +22,8 @@ namespace Systems
                                            !std::is_array_v<T> &&
                                            !std::is_function_v<T> &&
                                            !std::is_void_v<T> &&
-                                           !std::is_same_v<T, std::nullptr_t>;
+                                           !std::is_same_v<T, std::nullptr_t> &&
+                                           std::is_standard_layout_v<T>;
 
     template <typename... Ts>
     inline constexpr bool CanBeComponents = (CanBeComponent<Ts> && ...);

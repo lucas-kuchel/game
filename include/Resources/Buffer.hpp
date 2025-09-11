@@ -6,14 +6,6 @@
 
 namespace Resources
 {
-    enum class BufferType
-    {
-        VERTEX,
-        INDEX,
-        STORAGE,
-        CONSTANT,
-    };
-
     enum class BufferAttributeType
     {
         R32_FLOAT,
@@ -85,10 +77,6 @@ namespace Resources
     struct BufferFormatDescriptor
     {
         std::vector<BufferAttributeType> Attributes;
-
-        std::size_t Index;
-
-        BufferType Type;
     };
 
     struct BufferDescriptor

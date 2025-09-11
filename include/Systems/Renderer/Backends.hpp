@@ -43,14 +43,14 @@ namespace Systems
         void Update();
 
         void CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
-        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
-        void DeleteBuffer(const Resources::BufferHandle& handle);
+        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor, const Resources::BufferData& data);
+        void DeleteBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
 
         void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
-        void DeletePipeline(const Resources::PipelineHandle& handle);
+        void DeletePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
 
         void CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
-        void DeleteSubmission(const Resources::SubmissionHandle& handle);
+        void DeleteSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
 
         void CreateCommandBuffer(const CommandBuffer& buffer);
         void SubmitToCommandBuffer(const CommandBuffer& buffer, const Resources::SubmissionHandle& submission);
@@ -77,14 +77,14 @@ namespace Systems
         void Update();
 
         void CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
-        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
-        void DeleteBuffer(const Resources::BufferHandle& handle);
+        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor, const Resources::BufferData& data);
+        void DeleteBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
 
         void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
-        void DeletePipeline(const Resources::PipelineHandle& handle);
+        void DeletePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
 
         void CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
-        void DeleteSubmission(const Resources::SubmissionHandle& handle);
+        void DeleteSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
 
         void CreateCommandBuffer(const CommandBuffer& buffer);
         void SubmitToCommandBuffer(const CommandBuffer& buffer, const Resources::SubmissionHandle& submission);
@@ -111,14 +111,14 @@ namespace Systems
         void Update();
 
         void CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
-        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
-        void DeleteBuffer(const Resources::BufferHandle& handle);
+        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor, const Resources::BufferData& data);
+        void DeleteBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
 
         void CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
-        void DeletePipeline(const Resources::PipelineHandle& handle);
+        void DeletePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor);
 
         void CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
-        void DeleteSubmission(const Resources::SubmissionHandle& handle);
+        void DeleteSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor);
 
         void CreateCommandBuffer(const CommandBuffer& buffer);
         void SubmitToCommandBuffer(const CommandBuffer& buffer, const Resources::SubmissionHandle& submission);

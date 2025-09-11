@@ -12,6 +12,7 @@
 
 namespace Systems
 {
+#if defined(PLATFORM_APPLE)
     static MTLVertexFormat ToMTLVertexFormat(Resources::BufferAttributeType type)
     {
         using T = Resources::BufferAttributeType;
@@ -179,6 +180,8 @@ namespace Systems
 
         return vertexDesc;
     }
+
+#endif
 
     std::string GetMetalLibraryPath(const std::string_view& hlslPath)
     {

@@ -33,11 +33,11 @@ namespace Systems
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::SetBufferData(const Resources::BufferHandle&, const Resources::BufferData&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::SetBufferData(const Resources::BufferHandle&, const Resources::BufferDescriptor&, const Resources::BufferData&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::DeleteBuffer(const Resources::BufferHandle&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::DeleteBuffer(const Resources::BufferHandle&, const Resources::BufferDescriptor&)
     {
     }
 
@@ -45,7 +45,7 @@ namespace Systems
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::DeletePipeline(const Resources::PipelineHandle&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::DeletePipeline(const Resources::PipelineHandle&, const Resources::RasterPipelineDescriptor&)
     {
     }
 
@@ -53,7 +53,7 @@ namespace Systems
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::DeleteSubmission(const Resources::SubmissionHandle&)
+    void RendererBackendImplementation<RendererBackend::VULKAN>::DeleteSubmission(const Resources::SubmissionHandle&, const Resources::SubmissionDescriptor&)
     {
     }
 

@@ -21,7 +21,7 @@ namespace Game
         auto mouseLayer = mWindow.CreateInteractionLayer<Systems::WindowInteractive::MOUSE_LAYER>();
 
         auto cursorState = mouseLayer.GetCursorState();
-        cursorState.Mode = Systems::CursorMode::DISABLED;
+        cursorState.Mode = Systems::CursorMode::NORMAL;
         mouseLayer.SetCursorState(cursorState);
 
         for (auto& [bitmask, archetype] : mRegistry.GetArchetypes())
@@ -115,7 +115,18 @@ namespace Game
                 for (auto [entity, mesh, renderable] : mRegistry.GetEntityView<BasicMeshComponent, RenderableComponent>(archetype))
                 {
                     Resources::SubmissionDescriptor submissionDescriptor = {
-                        .DataBuffers = {mCameraBuffer},
+                        .ShaderStages = {
+                            Resources::ShaderStageSubmissionDescriptor{
+                                .ConstantBuffers = {mCameraBuffer},
+                                .StorageBuffers = {},
+                                .Stage = Resources::ShaderStage::VERTEX,
+                            },
+                            Resources::ShaderStageSubmissionDescriptor{
+                                .ConstantBuffers = {},
+                                .StorageBuffers = {},
+                                .Stage = Resources::ShaderStage::PIXEL,
+                            },
+                        },
                         .VertexBuffers = {mesh.VertexBuffer},
                         .IndexBuffer = mesh.IndexBuffer,
                         .IndexBufferType = Resources::BufferAttributeType::R32_UINT,
@@ -249,6 +260,14 @@ namespace Game
                 {
                     glm::ivec2 size = mWindow.Get<Systems::WindowAttribute::SIZE>();
                     camera.Aspect = static_cast<float>(size.x) / static_cast<float>(size.y);
+
+                    static double lastScroll = 0.0;
+
+                    auto scrollState = mouseLayer.GetScrollState();
+
+                    camera.FOV += (scrollState.Offsets.x - lastScroll);
+
+                    lastScroll = scrollState.Offsets.y;
                 }
             }
 
@@ -309,8 +328,6 @@ namespace Game
                 Resources::BufferAttributeType::R32G32B32_FLOAT,
                 Resources::BufferAttributeType::R32G32B32A32_FLOAT,
             },
-            .Index = 1,
-            .Type = Resources::BufferType::VERTEX,
         };
 
         Resources::BufferFormatDescriptor cameraFormat = {
@@ -318,25 +335,26 @@ namespace Game
                 Resources::BufferAttributeType::F32_4x4,
                 Resources::BufferAttributeType::F32_4x4,
             },
-            .Index = 0,
-            .Type = Resources::BufferType::CONSTANT,
         };
 
         Resources::ShaderDescriptor vertexShaderDescriptor = {
             .Stage = Resources::ShaderStage::VERTEX,
-            .Path = "assets/shaders/basic.hlsl",
+            .ConstantBufferFormats = {cameraFormat},
+            .StorageBufferFormats = {},
+            .Path = "assets/shaders/basic.vertex.spv",
             .Function = "VSMain",
         };
 
         Resources::ShaderDescriptor pixelShaderDescriptor = {
             .Stage = Resources::ShaderStage::PIXEL,
-            .Path = "assets/shaders/basic.hlsl",
+            .ConstantBufferFormats = {},
+            .StorageBufferFormats = {},
+            .Path = "assets/shaders/basic.pixel.spv",
             .Function = "PSMain",
         };
 
         Resources::RasterPipelineDescriptor pipelineDescriptor = {
             .Shaders = {vertexShaderDescriptor, pixelShaderDescriptor},
-            .DataBufferFormats = {cameraFormat},
             .VertexBufferFormats = {vertexFormat},
             .RasterState = {
                 .Primitive = Resources::PipelinePrimitive::TRIANGLE_LIST,
