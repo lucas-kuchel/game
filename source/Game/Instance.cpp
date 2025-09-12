@@ -2,6 +2,8 @@
 
 #include <glm/gtc/quaternion.hpp>
 
+#include <chrono>
+
 namespace Game
 {
     Instance::Instance(Systems::Context& context, Systems::Renderer& renderer, Systems::Window& window)

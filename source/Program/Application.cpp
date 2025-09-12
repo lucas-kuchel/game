@@ -33,7 +33,7 @@ namespace Program
     Systems::ContextDescriptor Application::CreateContext()
     {
         return {
-            .Renderer = Systems::RendererBackend::METAL,
+            .Renderer = Systems::RendererBackend::OPENGL,
         };
     }
 

@@ -19,6 +19,12 @@ namespace Systems
         Resources::BufferDescriptor Descriptor;
     };
 
+    struct OpenGLShaderBindings
+    {
+        std::vector<GLuint> ConstantBufferBindings;
+        std::vector<GLuint> StorageBufferBindings;
+    };
+
     struct OpenGLRasterPipelineData
     {
         GLuint ID = 0;
@@ -27,6 +33,8 @@ namespace Systems
         GLenum FaceCulling = GL_INVALID_ENUM;
         GLenum FrontFace = GL_INVALID_ENUM;
         GLenum PolygonMode = GL_INVALID_ENUM;
+
+        std::vector<OpenGLShaderBindings> ShaderBindings;
 
         bool CullBackface = false;
 
@@ -383,8 +391,10 @@ namespace Systems
             throw Debug::Exception(Debug::ErrorCode::NOT_IMPLEMENTED, "[UNREACHABLE]");
         }
 
-        std::vector<std::string> ConvertShaderBinaries(const Resources::RasterPipelineDescriptor& descriptor)
+        std::vector<std::string> ConvertShaderBinaries(OpenGLRasterPipelineData& data)
         {
+            auto& descriptor = data.Descriptor;
+
             for (std::size_t i = 0; i < descriptor.Shaders.size(); i++)
             {
                 for (std::size_t j = i + 1; j < descriptor.Shaders.size(); j++)
@@ -407,8 +417,10 @@ namespace Systems
 
             sources.reserve(descriptor.Shaders.size());
 
-            for (const auto& shaderDescriptor : descriptor.Shaders)
+            for (std::size_t i = 0; i < descriptor.Shaders.size(); i++)
             {
+                const auto& shaderDescriptor = descriptor.Shaders[i];
+
                 std::filesystem::path spirvPath = shaderDescriptor.Path;
 
                 std::ifstream spirvFile(spirvPath, std::ios::binary | std::ios::ate);
@@ -520,6 +532,20 @@ namespace Systems
                                                                        "SPIR-V shader loading error\n"
                                                                        "shader has incorrect storage buffer count for pipeline requirements (path = {})",
                                            shaderDescriptor.Path);
+                }
+
+                for (auto& constantBuffer : resources.uniform_buffers)
+                {
+                    GLuint binding = glsl.get_decoration(constantBuffer.id, spv::DecorationBinding);
+
+                    data.ShaderBindings[i].ConstantBufferBindings.push_back(binding);
+                }
+
+                for (auto& storageBuffer : resources.storage_buffers)
+                {
+                    GLuint binding = glsl.get_decoration(storageBuffer.id, spv::DecorationBinding);
+
+                    data.ShaderBindings[i].StorageBufferBindings.push_back(binding);
                 }
 
                 if (shaderDescriptor.Stage == Resources::ShaderStage::VERTEX)
@@ -749,9 +775,13 @@ namespace Systems
         info.ID = glCreateProgram();
         info.Descriptor = descriptor;
 
-        auto shaderSources = mSpecifics->ConvertShaderBinaries(descriptor);
+        info.ShaderBindings.resize(descriptor.Shaders.size());
+
+        auto shaderSources = mSpecifics->ConvertShaderBinaries(info);
 
         std::vector<GLuint> shaders;
+
+        shaders.reserve(descriptor.Shaders.size());
 
         for (std::size_t i = 0; i < descriptor.Shaders.size(); i++)
         {
@@ -970,22 +1000,22 @@ namespace Systems
             glUseProgram(pipelineInfo.ID);
             glBindVertexArray(submissionInfo.ID);
 
-            for (auto& shaderStage : submissionInfo.Descriptor.ShaderStages)
+            for (std::size_t i = 0; i < pipelineInfo.ShaderBindings.size(); i++)
             {
-                for (std::size_t i = 0; i < shaderStage.ConstantBuffers.size(); i++)
-                {
-                    auto& buffer = shaderStage.ConstantBuffers[i];
-                    auto& bufferData = mSpecifics->Buffers.Get(buffer.ID);
+                const auto& shaderBindings = pipelineInfo.ShaderBindings[i];
 
-                    glBindBufferBase(GL_UNIFORM_BUFFER, i, bufferData.ID);
+                for (size_t j = 0; j < shaderBindings.ConstantBufferBindings.size(); j++)
+                {
+                    auto& bufferData = mSpecifics->Buffers.Get(submissionInfo.Descriptor.ShaderStages[i].ConstantBuffers[j].ID);
+
+                    glBindBufferBase(GL_UNIFORM_BUFFER, shaderBindings.ConstantBufferBindings[j], bufferData.ID);
                 }
 
-                for (std::size_t i = 0; i < shaderStage.StorageBuffers.size(); i++)
+                for (size_t j = 0; j < shaderBindings.StorageBufferBindings.size(); j++)
                 {
-                    auto& buffer = shaderStage.StorageBuffers[i];
-                    auto& bufferData = mSpecifics->Buffers.Get(buffer.ID);
+                    auto& bufferData = mSpecifics->Buffers.Get(submissionInfo.Descriptor.ShaderStages[i].StorageBuffers[j].ID);
 
-                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, i, bufferData.ID);
+                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, shaderBindings.StorageBufferBindings[j], bufferData.ID);
                 }
             }
 
