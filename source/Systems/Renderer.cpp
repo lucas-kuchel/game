@@ -14,7 +14,13 @@ namespace Systems
     {
     }
 
-    void Renderer::Update()
+    void Renderer::BeginFrame()
+    {
+        std::visit([](auto& backend)
+                   { backend->BeginFrame(); }, mBackend);
+    }
+
+    void Renderer::EndFrame()
     {
         if (mClearColourDirty)
         {
@@ -33,7 +39,7 @@ namespace Systems
         }
 
         std::visit([](auto& backend)
-                   { backend->Update(); }, mBackend);
+                   { backend->EndFrame(); }, mBackend);
     }
 
     template <>

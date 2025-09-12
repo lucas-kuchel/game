@@ -70,13 +70,13 @@ namespace Game
                 {
                     mesh.Vertices = {
                         BasicMeshVertex{{-0.5, -0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
-                        BasicMeshVertex{{0.5, -0.5, 0.5}, {0.5, 1.0, 0.5, 1.0}},
-                        BasicMeshVertex{{0.5, 0.5, 0.5}, {0.0, 0.5, 1.0, 1.0}},
-                        BasicMeshVertex{{-0.5, 0.5, 0.5}, {0.0, 0.0, 0.5, 1.0}},
-                        BasicMeshVertex{{-0.5, -0.5, -0.5}, {0.0, 1.0, 1.0, 1.0}},
-                        BasicMeshVertex{{0.5, -0.5, -0.5}, {1.0, 0.0, 1.0, 1.0}},
-                        BasicMeshVertex{{0.5, 0.5, -0.5}, {1.0, 1.0, 0.0, 1.0}},
-                        BasicMeshVertex{{-0.5, 0.5, -0.5}, {1.0, 1.0, 1.0, 1.0}},
+                        BasicMeshVertex{{0.5, -0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
+                        BasicMeshVertex{{0.5, 0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
+                        BasicMeshVertex{{-0.5, 0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
+                        BasicMeshVertex{{-0.5, -0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
+                        BasicMeshVertex{{0.5, -0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
+                        BasicMeshVertex{{0.5, 0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
+                        BasicMeshVertex{{-0.5, 0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
                     };
 
                     mesh.Triangles = {
@@ -294,7 +294,7 @@ namespace Game
             {
                 for (auto [entity, camera, buffer] : mRegistry.GetEntityView<CameraComponent3D, ConstantBufferComponent>(archetype))
                 {
-                    camera.Projection = glm::perspectiveRH_ZO(glm::radians(camera.FOV), camera.Aspect, camera.NearPlane, camera.FarPlane);
+                    camera.Projection = glm::perspectiveRH_NO(glm::radians(camera.FOV), camera.Aspect, camera.NearPlane, camera.FarPlane);
 
                     std::array<glm::fmat4, 2> data = {
                         camera.Projection,

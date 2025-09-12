@@ -25,7 +25,11 @@ namespace Systems
         delete mSpecifics;
     }
 
-    void RendererBackendImplementation<RendererBackend::VULKAN>::Update()
+    void RendererBackendImplementation<RendererBackend::VULKAN>::BeginFrame()
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::VULKAN>::EndFrame()
     {
     }
 

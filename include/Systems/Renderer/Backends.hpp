@@ -40,7 +40,8 @@ namespace Systems
         RendererBackendImplementation(RendererBackendImplementation&&) = default;
         ~RendererBackendImplementation();
 
-        void Update();
+        void BeginFrame();
+        void EndFrame();
 
         void CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
         void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor, const Resources::BufferData& data);
@@ -74,7 +75,8 @@ namespace Systems
         RendererBackendImplementation(RendererBackendImplementation&&) = default;
         ~RendererBackendImplementation();
 
-        void Update();
+        void BeginFrame();
+        void EndFrame();
 
         void CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
         void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor, const Resources::BufferData& data);
@@ -108,7 +110,8 @@ namespace Systems
         RendererBackendImplementation(RendererBackendImplementation&&) = default;
         ~RendererBackendImplementation();
 
-        void Update();
+        void BeginFrame();
+        void EndFrame();
 
         void CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor);
         void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor, const Resources::BufferData& data);

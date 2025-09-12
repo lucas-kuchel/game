@@ -20,8 +20,9 @@ namespace Program
     {
         mContext.Update();
         mWindow.Update();
-        mRenderer.Update();
+        mRenderer.BeginFrame();
         mInstance.Update();
+        mRenderer.EndFrame();
     }
 
     bool Application::ShouldUpdate() const

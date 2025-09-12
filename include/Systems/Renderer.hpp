@@ -54,7 +54,8 @@ namespace Systems
         Renderer(const RendererDescriptor& descriptor);
         ~Renderer();
 
-        void Update();
+        void BeginFrame();
+        void EndFrame();
 
         Resources::BufferHandle CreateBuffer(const Resources::BufferDescriptor& descriptor);
         Resources::BufferDescriptor GetBufferData(const Resources::BufferHandle& handle);

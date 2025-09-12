@@ -23,7 +23,11 @@ namespace Systems
         delete mSpecifics;
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::Update()
+    void RendererBackendImplementation<RendererBackend::METAL>::BeginFrame()
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::METAL>::EndFrame()
     {
     }
 

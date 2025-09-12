@@ -22,7 +22,13 @@ namespace Systems
     struct OpenGLRasterPipelineData
     {
         GLuint ID = 0;
+
         GLenum Primitive = GL_INVALID_ENUM;
+        GLenum FaceCulling = GL_INVALID_ENUM;
+        GLenum FrontFace = GL_INVALID_ENUM;
+        GLenum PolygonMode = GL_INVALID_ENUM;
+
+        bool CullBackface = false;
 
         Resources::RasterPipelineDescriptor Descriptor;
     };
@@ -593,6 +599,7 @@ namespace Systems
 
         glViewport(0, 0, windowSize[0], windowSize[1]);
         glClearColor(descriptor.ClearColour.r, descriptor.ClearColour.g, descriptor.ClearColour.b, descriptor.ClearColour.a);
+        glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
     }
 
     RendererBackendImplementation<RendererBackend::OPENGL>::~RendererBackendImplementation()
@@ -600,15 +607,19 @@ namespace Systems
         delete mSpecifics;
     }
 
-    void RendererBackendImplementation<RendererBackend::OPENGL>::Update()
+    void RendererBackendImplementation<RendererBackend::OPENGL>::BeginFrame()
     {
-        auto layer = mSpecifics->Window.CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>();
         auto& windowSize = mSpecifics->Window.Get<WindowAttribute::SIZE>();
-
-        layer.SwapBuffers();
 
         glViewport(0, 0, windowSize.x, windowSize.y);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+
+    void RendererBackendImplementation<RendererBackend::OPENGL>::EndFrame()
+    {
+        auto layer = mSpecifics->Window.CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>();
+
+        layer.SwapBuffers();
     }
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor)
@@ -668,6 +679,68 @@ namespace Systems
             case Resources::PipelinePrimitive::POINT:
             {
                 info.Primitive = GL_POINT;
+
+                break;
+            }
+        }
+
+        switch (descriptor.RasterState.FaceCulling)
+        {
+            case Resources::PipelineFaceCulling::BACKFACE:
+            {
+                info.CullBackface = true;
+                info.FaceCulling = GL_BACK;
+
+                break;
+            }
+            case Resources::PipelineFaceCulling::FRONTFACE:
+            {
+                info.CullBackface = true;
+                info.FaceCulling = GL_FRONT;
+
+                break;
+            }
+            case Resources::PipelineFaceCulling::DISABLED:
+            {
+                info.CullBackface = false;
+
+                break;
+            }
+        }
+
+        switch (descriptor.RasterState.FrontFace)
+        {
+            case Resources::PipelineFrontFace::CLOCKWISE:
+            {
+                info.FrontFace = GL_CW;
+
+                break;
+            }
+            case Resources::PipelineFrontFace::ANTICLOCKWISE:
+            {
+                info.FrontFace = GL_CCW;
+
+                break;
+            }
+        }
+
+        switch (descriptor.RasterState.PolygonMode)
+        {
+            case Resources::PipelinePolygonMode::SOLID:
+            {
+                info.PolygonMode = GL_FILL;
+
+                break;
+            }
+            case Resources::PipelinePolygonMode::LINE:
+            {
+                info.PolygonMode = GL_LINE;
+
+                break;
+            }
+            case Resources::PipelinePolygonMode::POINT:
+            {
+                info.PolygonMode = GL_POINT;
 
                 break;
             }
@@ -916,68 +989,19 @@ namespace Systems
                 }
             }
 
-            switch (pipelineInfo.Descriptor.RasterState.FaceCulling)
+            if (pipelineInfo.CullBackface)
             {
-                case Resources::PipelineFaceCulling::BACKFACE:
-                {
-                    glEnable(GL_CULL_FACE);
-                    glCullFace(GL_BACK);
+                glEnable(GL_CULL_FACE);
 
-                    break;
-                }
-                case Resources::PipelineFaceCulling::FRONTFACE:
-                {
-                    glEnable(GL_CULL_FACE);
-                    glCullFace(GL_FRONT);
-
-                    break;
-                }
-                case Resources::PipelineFaceCulling::DISABLED:
-                {
-                    glDisable(GL_CULL_FACE);
-
-                    break;
-                }
+                glCullFace(pipelineInfo.FaceCulling);
+                glFrontFace(pipelineInfo.FrontFace);
+            }
+            else
+            {
+                glDisable(GL_CULL_FACE);
             }
 
-            switch (pipelineInfo.Descriptor.RasterState.FrontFace)
-            {
-                case Resources::PipelineFrontFace::CLOCKWISE:
-                {
-                    glFrontFace(GL_CW);
-
-                    break;
-                }
-                case Resources::PipelineFrontFace::ANTICLOCKWISE:
-                {
-                    glFrontFace(GL_CCW);
-
-                    break;
-                }
-            }
-
-            switch (pipelineInfo.Descriptor.RasterState.PolygonMode)
-            {
-                case Resources::PipelinePolygonMode::SOLID:
-                {
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-                    break;
-                }
-                case Resources::PipelinePolygonMode::LINE:
-                {
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-                    break;
-                }
-                case Resources::PipelinePolygonMode::POINT:
-                {
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-
-                    break;
-                }
-            }
-
+            glPolygonMode(GL_FRONT_AND_BACK, pipelineInfo.PolygonMode);
             glDrawElements(pipelineInfo.Primitive, count, typeInfo.Type, nullptr);
         }
     }
