@@ -8,7 +8,7 @@ namespace Game
         : mContext(context), mRenderer(renderer), mWindow(window)
     {
         mRegistry.CreateEntity<CameraComponent3D, ConstantBufferComponent, TransformComponent3D, PlayerComponent>();
-        mRegistry.CreateEntity<BasicMeshComponent, RenderableComponent>();
+        mRegistry.CreateEntity<BasicMeshComponent, RenderableComponent, ConstantBufferComponent>();
 
         CreateBasicMeshPipeline();
 
@@ -17,6 +17,7 @@ namespace Game
         auto meshBitmask = mRegistry.MakeBitmask<BasicMeshComponent>();
         auto renderableBitmask = mRegistry.MakeBitmask<RenderableComponent>();
         auto transformBitmask = mRegistry.MakeBitmask<TransformComponent3D>();
+        auto playerBitmask = mRegistry.MakeBitmask<PlayerComponent>();
 
         auto mouseLayer = mWindow.CreateInteractionLayer<Systems::WindowInteractive::MOUSE_LAYER>();
 
@@ -37,6 +38,27 @@ namespace Game
                     glm::ivec2 size = window.Get<Systems::WindowAttribute::SIZE>();
 
                     camera.Aspect = static_cast<float>(size.x) / static_cast<float>(size.y);
+                }
+            }
+
+            if ((playerBitmask | bufferBitmask) == (bitmask & (playerBitmask | bufferBitmask)))
+            {
+                for (auto [entity, player, buffer] : mRegistry.GetEntityView<PlayerComponent, ConstantBufferComponent>(archetype))
+                {
+                    Resources::BufferDescriptor constantDescriptor = {
+                        .Size = 2 * sizeof(float),
+                    };
+
+                    buffer.Handle = mRenderer.CreateBuffer(constantDescriptor);
+
+                    float values[2] = {
+                        2.0,
+                        0.5,
+                    };
+
+                    mRenderer.SetBufferData(buffer.Handle, {.Data = values, .Stride = 2 * sizeof(float), .Offset = 0});
+
+                    mConstantBuffer = buffer.Handle;
                 }
             }
 
@@ -117,12 +139,12 @@ namespace Game
                     Resources::SubmissionDescriptor submissionDescriptor = {
                         .ShaderStages = {
                             Resources::ShaderStageSubmissionDescriptor{
-                                .ConstantBuffers = {mCameraBuffer},
+                                .ConstantBuffers = {mCameraBuffer, mConstantBuffer},
                                 .StorageBuffers = {},
                                 .Stage = Resources::ShaderStage::VERTEX,
                             },
                             Resources::ShaderStageSubmissionDescriptor{
-                                .ConstantBuffers = {},
+                                .ConstantBuffers = {mConstantBuffer},
                                 .StorageBuffers = {},
                                 .Stage = Resources::ShaderStage::PIXEL,
                             },
@@ -134,6 +156,15 @@ namespace Game
                     };
 
                     renderable.Handle = mRenderer.CreateSubmission(submissionDescriptor);
+                }
+            }
+
+            if (playerBitmask == (bitmask & playerBitmask))
+            {
+                for (auto [entity, player] : mRegistry.GetEntityView<PlayerComponent>(archetype))
+                {
+                    player.Sensitivity = 25.0;
+                    player.Speed = 1.0;
                 }
             }
         }
@@ -176,6 +207,14 @@ namespace Game
 
     void Instance::Update()
     {
+        using namespace std::chrono;
+
+        static high_resolution_clock::time_point lastTime = high_resolution_clock::now();
+        auto currentTime = high_resolution_clock::now();
+        duration<float> deltaTimeDuration = currentTime - lastTime;
+        float deltaTime = deltaTimeDuration.count();
+        lastTime = currentTime;
+
         auto cameraBitmask = mRegistry.MakeBitmask<CameraComponent3D>();
         auto bufferBitmask = mRegistry.MakeBitmask<ConstantBufferComponent>();
         auto transformBitmask = mRegistry.MakeBitmask<TransformComponent3D>();
@@ -197,27 +236,27 @@ namespace Game
 
                     if (keyboardLayer.GetKeyState(Systems::Key::W) == Systems::PressableState::HELD)
                     {
-                        movement.z += 1.0f;
+                        movement.z += 1.0;
                     }
                     if (keyboardLayer.GetKeyState(Systems::Key::S) == Systems::PressableState::HELD)
                     {
-                        movement.z -= 1.0f;
+                        movement.z -= 1.0;
                     }
                     if (keyboardLayer.GetKeyState(Systems::Key::A) == Systems::PressableState::HELD)
                     {
-                        movement.x -= 1.0f;
+                        movement.x -= 1.0;
                     }
                     if (keyboardLayer.GetKeyState(Systems::Key::D) == Systems::PressableState::HELD)
                     {
-                        movement.x += 1.0f;
+                        movement.x += 1.0;
                     }
                     if (keyboardLayer.GetKeyState(Systems::Key::SPACE) == Systems::PressableState::HELD)
                     {
-                        movement.y += 1.0f;
+                        movement.y += 1.0;
                     }
                     if (keyboardLayer.GetKeyState(Systems::Key::LSHIFT) == Systems::PressableState::HELD)
                     {
-                        movement.y -= 1.0f;
+                        movement.y -= 1.0;
                     }
 
                     glm::fquat yaw = glm::angleAxis(glm::radians(transform.Rotation.y), glm::fvec3(0, 1, 0));
@@ -229,7 +268,7 @@ namespace Game
                     glm::fvec3 right = orientation * glm::fvec3(1, 0, 0);
                     glm::fvec3 up = glm::fvec3(0, 1, 0);
 
-                    transform.Position += (forward * movement.z + right * movement.x + up * movement.y) * player.Speed;
+                    transform.Position += (forward * movement.z + right * movement.x + up * movement.y) * player.Speed * deltaTime;
 
                     static glm::dvec2 prevCursor = mouseLayer.GetCursorState().Position;
 
@@ -238,16 +277,16 @@ namespace Game
 
                     prevCursor = cursorPos;
 
-                    transform.Rotation.y += static_cast<float>(-mouseDelta.x) * player.Sensitivity;
-                    transform.Rotation.x -= static_cast<float>(mouseDelta.y) * player.Sensitivity;
+                    transform.Rotation.y += static_cast<float>(-mouseDelta.x) * player.Sensitivity * deltaTime;
+                    transform.Rotation.x -= static_cast<float>(mouseDelta.y) * player.Sensitivity * deltaTime;
 
                     if (keyboardLayer.GetKeyState(Systems::Key::Q) == Systems::PressableState::HELD)
                     {
-                        transform.Rotation.z += 0.1 * player.Sensitivity;
+                        transform.Rotation.z += 1.0 * player.Sensitivity * deltaTime;
                     }
                     if (keyboardLayer.GetKeyState(Systems::Key::E) == Systems::PressableState::HELD)
                     {
-                        transform.Rotation.z -= 0.1 * player.Sensitivity;
+                        transform.Rotation.z -= 1.0 * player.Sensitivity * deltaTime;
                     }
 
                     transform.Rotation.x = glm::clamp(transform.Rotation.x, -89.0f, 89.0f);
@@ -294,7 +333,7 @@ namespace Game
             {
                 for (auto [entity, camera, buffer] : mRegistry.GetEntityView<CameraComponent3D, ConstantBufferComponent>(archetype))
                 {
-                    camera.Projection = glm::perspectiveRH_NO(glm::radians(camera.FOV), camera.Aspect, camera.NearPlane, camera.FarPlane);
+                    camera.Projection = glm::perspectiveRH_ZO(glm::radians(camera.FOV), camera.Aspect, camera.NearPlane, camera.FarPlane);
 
                     std::array<glm::fmat4, 2> data = {
                         camera.Projection,
@@ -339,9 +378,16 @@ namespace Game
             },
         };
 
+        Resources::BufferFormatDescriptor constantFormat = {
+            .Attributes = {
+                Resources::BufferAttributeType::R32_FLOAT,
+                Resources::BufferAttributeType::R32_FLOAT,
+            },
+        };
+
         Resources::ShaderDescriptor vertexShaderDescriptor = {
             .Stage = Resources::ShaderStage::VERTEX,
-            .ConstantBufferFormats = {cameraFormat},
+            .ConstantBufferFormats = {cameraFormat, constantFormat},
             .StorageBufferFormats = {},
             .Path = "assets/shaders/basic.vertex.spv",
             .Function = "VSMain",
@@ -349,7 +395,7 @@ namespace Game
 
         Resources::ShaderDescriptor pixelShaderDescriptor = {
             .Stage = Resources::ShaderStage::PIXEL,
-            .ConstantBufferFormats = {},
+            .ConstantBufferFormats = {constantFormat},
             .StorageBufferFormats = {},
             .Path = "assets/shaders/basic.pixel.spv",
             .Function = "PSMain",

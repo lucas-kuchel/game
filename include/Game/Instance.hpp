@@ -36,6 +36,7 @@ namespace Game
 
         Resources::PipelineHandle mBasicMeshPipeline;
         Resources::BufferHandle mCameraBuffer;
+        Resources::BufferHandle mConstantBuffer;
 
         Systems::Context& mContext;
         Systems::Renderer& mRenderer;

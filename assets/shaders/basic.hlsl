@@ -1,33 +1,32 @@
-cbuffer Camera
-{
-    float4x4 Projection;
-    float4x4 View;
+cbuffer Camera {
+  float4x4 Projection;
+  float4x4 View;
 };
 
-struct VSInput
-{
-    float3 Position : POSITION;
-    float4 Colour   : COLOR;
+cbuffer Constant {
+  float Value0;
+  float Value1;
 };
 
-struct VSOutput
-{
-    float4 Position : SV_POSITION;
-    float4 Colour   : COLOR;
+struct VSInput {
+  float3 Position : POSITION;
+  float4 Colour : COLOR;
 };
 
-VSOutput VSMain(VSInput input)
-{
-    VSOutput output;
+struct VSOutput {
+  float4 Position : SV_POSITION;
+  float4 Colour : COLOR;
+};
 
-    output.Position = mul(Projection, mul(View, float4(input.Position, 1.0f)));
+VSOutput VSMain(VSInput input) {
+  VSOutput output;
 
-    output.Colour = input.Colour;
+  output.Position =
+      mul(Projection, mul(View, float4(input.Position * Value0, 1.0f)));
 
-    return output;
+  output.Colour = input.Colour;
+
+  return output;
 }
 
-float4 PSMain(VSOutput input) : SV_TARGET
-{
-    return input.Colour;
-}
+float4 PSMain(VSOutput input) : SV_TARGET { return input.Colour * Value1; }
