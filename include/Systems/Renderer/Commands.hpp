@@ -14,6 +14,7 @@ namespace Systems
         void Submit(const Resources::SubmissionHandle& submission);
         void Flush();
 
+        const std::size_t& GetID() const;
         const Types::SparseSet<Resources::SubmissionHandle>& GetContents() const;
 
     private:

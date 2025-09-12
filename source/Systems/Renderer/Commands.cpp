@@ -73,6 +73,11 @@ namespace Systems
                    { backend->DrawCommandBuffer(buffer); }, mBackend);
     }
 
+    const std::size_t& CommandBuffer::GetID() const
+    {
+        return mID;
+    }
+
     const Types::SparseSet<Resources::SubmissionHandle>& CommandBuffer::GetContents() const
     {
         return mBuffer;

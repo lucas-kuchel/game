@@ -516,29 +516,6 @@ namespace Systems
                                            shaderDescriptor.Path);
                 }
 
-                for (std::size_t i = 0; i < resources.uniform_buffers.size(); i++)
-                {
-                    auto& resource = resources.uniform_buffers[i];
-
-                    if (resource.id != 0)
-                    {
-                        glsl.set_decoration(resource.id, spv::DecorationBinding, static_cast<std::uint32_t>(i));
-                        glsl.set_decoration(resource.id, spv::DecorationDescriptorSet, static_cast<std::uint32_t>(0));
-                    }
-                }
-
-                for (std::size_t i = 0; i < resources.storage_buffers.size(); i++)
-                {
-
-                    auto& resource = resources.storage_buffers[i];
-
-                    if (resource.id != 0)
-                    {
-                        glsl.set_decoration(resource.id, spv::DecorationBinding, static_cast<std::uint32_t>(i));
-                        glsl.set_decoration(resource.id, spv::DecorationDescriptorSet, static_cast<std::uint32_t>(0));
-                    }
-                }
-
                 if (shaderDescriptor.Stage == Resources::ShaderStage::VERTEX)
                 {
                     std::size_t attributeCount = 0;

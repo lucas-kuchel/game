@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 project(game LANGUAGES CXX)
 
-file(GLOB_RECURSE SOURCES "source/*.cpp")
+file(GLOB_RECURSE CPP_SOURCES "source/*.cpp")
 
 find_package(VulkanHeaders CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
@@ -14,6 +14,8 @@ find_package(spirv_cross_glsl CONFIG REQUIRED)
 if (APPLE)
     find_library(METAL_FRAMEWORK Metal)
     find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+    find_package(spirv_cross_msl CONFIG REQUIRED)
+    file(GLOB_RECURSE MM_SOURCES "source/*.mm")
 endif()
   
 add_executable(game)
@@ -29,17 +31,18 @@ target_link_libraries(game PRIVATE
     Vulkan::Headers
     glm::glm
     spirv-cross-core
-    spirv-cross-cpp
     spirv-cross-glsl
 )
 
 if(APPLE)
-    target_link_libraries(game PRIVATE ${METAL_FRAMEWORK} ${QUARTZCORE_FRAMEWORK})
+    target_sources(game PRIVATE ${MM_SOURCES})
+    target_link_libraries(game PRIVATE ${METAL_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} spirv-cross-msl)
 endif()
 
-target_sources(game PRIVATE ${SOURCES})
+target_sources(game PRIVATE ${CPP_SOURCES})
 
 target_include_directories(game PRIVATE "include")
+
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(game PRIVATE DEBUG_BUILD_TYPE)

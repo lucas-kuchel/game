@@ -1,5 +1,7 @@
 #include <Systems/Renderer.hpp>
 
+#include <algorithm>
+
 namespace Systems
 {
     Resources::SubmissionHandle Renderer::CreateSubmission(Resources::SubmissionDescriptor& descriptor)
