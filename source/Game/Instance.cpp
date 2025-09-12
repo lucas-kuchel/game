@@ -21,7 +21,7 @@ namespace Game
         auto mouseLayer = mWindow.CreateInteractionLayer<Systems::WindowInteractive::MOUSE_LAYER>();
 
         auto cursorState = mouseLayer.GetCursorState();
-        cursorState.Mode = Systems::CursorMode::NORMAL;
+        cursorState.Mode = Systems::CursorMode::DISABLED;
         mouseLayer.SetCursorState(cursorState);
 
         for (auto& [bitmask, archetype] : mRegistry.GetArchetypes())
@@ -261,13 +261,15 @@ namespace Game
                     glm::ivec2 size = mWindow.Get<Systems::WindowAttribute::SIZE>();
                     camera.Aspect = static_cast<float>(size.x) / static_cast<float>(size.y);
 
-                    static double lastScroll = 0.0;
+                    static double lastScrollY = 0.0;
 
                     auto scrollState = mouseLayer.GetScrollState();
 
-                    camera.FOV += (scrollState.Offsets.x - lastScroll);
+                    double deltaY = scrollState.Offsets.y - lastScrollY;
 
-                    lastScroll = scrollState.Offsets.y;
+                    camera.FOV -= static_cast<float>(deltaY);
+
+                    lastScrollY = scrollState.Offsets.y;
                 }
             }
 
@@ -295,8 +297,8 @@ namespace Game
                     camera.Projection = glm::perspectiveRH_ZO(glm::radians(camera.FOV), camera.Aspect, camera.NearPlane, camera.FarPlane);
 
                     std::array<glm::fmat4, 2> data = {
-                        glm::mat4(1.0f),
-                        glm::mat4(1.0f),
+                        camera.Projection,
+                        camera.View,
                     };
 
                     Resources::BufferData bufferData = {
@@ -358,9 +360,9 @@ namespace Game
             .VertexBufferFormats = {vertexFormat},
             .RasterState = {
                 .Primitive = Resources::PipelinePrimitive::TRIANGLE_LIST,
-                .FrontFace = Resources::PipelineFrontFace::CLOCKWISE,
+                .FrontFace = Resources::PipelineFrontFace::ANTICLOCKWISE,
                 .PolygonMode = Resources::PipelinePolygonMode::SOLID,
-                .FaceCulling = Resources::PipelineFaceCulling::DISABLED,
+                .FaceCulling = Resources::PipelineFaceCulling::BACKFACE,
             },
         };
 

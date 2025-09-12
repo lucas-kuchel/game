@@ -651,6 +651,28 @@ namespace Systems
     {
         auto& info = mSpecifics->RasterPipelines.Insert(handle.ID, OpenGLRasterPipelineData());
 
+        switch (descriptor.RasterState.Primitive)
+        {
+            case Resources::PipelinePrimitive::TRIANGLE_LIST:
+            {
+                info.Primitive = GL_TRIANGLES;
+
+                break;
+            }
+            case Resources::PipelinePrimitive::LINE_LIST:
+            {
+                info.Primitive = GL_LINES;
+
+                break;
+            }
+            case Resources::PipelinePrimitive::POINT:
+            {
+                info.Primitive = GL_POINT;
+
+                break;
+            }
+        }
+
         info.ID = glCreateProgram();
         info.Descriptor = descriptor;
 
@@ -775,6 +797,8 @@ namespace Systems
     {
         auto& info = mSpecifics->Submissions.Insert(handle.ID, OpenGLSubmissionData());
         auto& pipelineInfo = mSpecifics->RasterPipelines.Get(descriptor.Pipeline.ID);
+
+        info.Descriptor = descriptor;
 
         glCreateVertexArrays(1, &info.ID);
 
