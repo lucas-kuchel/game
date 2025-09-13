@@ -15,7 +15,7 @@ namespace Game
     struct TransformComponent3D
     {
         glm::fvec3 Position;
-        glm::fvec2 Scale;
+        glm::fvec3 Scale;
         glm::fvec3 Rotation;
     };
 }

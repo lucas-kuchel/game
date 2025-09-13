@@ -10,6 +10,7 @@ namespace Game
         : mContext(context), mRenderer(renderer), mWindow(window)
     {
         mRegistry.CreateEntity<CameraComponent3D, ConstantBufferComponent, TransformComponent3D, PlayerComponent>();
+        mRegistry.CreateEntity<BasicMeshComponent, RenderableComponent, ConstantBufferComponent, TransformComponent3D>();
         mRegistry.CreateEntity<BasicMeshComponent, RenderableComponent, ConstantBufferComponent>();
 
         CreateBasicMeshPipeline();
@@ -43,22 +44,19 @@ namespace Game
                 }
             }
 
-            if ((playerBitmask | bufferBitmask) == (bitmask & (playerBitmask | bufferBitmask)))
+            if ((meshBitmask | bufferBitmask) == (bitmask & (meshBitmask | bufferBitmask)))
             {
-                for (auto [entity, player, buffer] : mRegistry.GetEntityView<PlayerComponent, ConstantBufferComponent>(archetype))
+                for (auto [entity, buffer] : mRegistry.GetEntityView<ConstantBufferComponent>(archetype))
                 {
-                    float values[2] = {
-                        2.0,
-                        0.5,
-                    };
-
                     Resources::BufferDescriptor constantDescriptor = {
-                        .Size = sizeof(values),
+                        .Size = sizeof(glm::fmat4),
                     };
 
                     buffer.Handle = mRenderer.CreateBuffer(constantDescriptor);
 
-                    mRenderer.SetBufferData(buffer.Handle, {.Data = values, .Stride = sizeof(values), .Offset = 0});
+                    glm::fmat4 identityModel(1.0f);
+
+                    mRenderer.SetBufferData(buffer.Handle, {.Data = &identityModel, .Stride = sizeof(glm::fmat4), .Offset = 0});
 
                     mConstantBuffer = buffer.Handle;
                 }
@@ -78,13 +76,13 @@ namespace Game
                 }
             }
 
-            if ((cameraBitmask | transformBitmask) == (bitmask & (cameraBitmask | transformBitmask)))
+            if ((transformBitmask) == (bitmask & (transformBitmask)))
             {
-                for (auto [entity, camera, transform] : mRegistry.GetEntityView<CameraComponent3D, TransformComponent3D>(archetype))
+                for (auto [entity, transform] : mRegistry.GetEntityView<TransformComponent3D>(archetype))
                 {
-                    transform.Position = {0.0, 0.0, 2.0};
+                    transform.Position = {0.0, 0.0, 0.0};
                     transform.Rotation = {0.0, 0.0, 0.0};
-                    transform.Scale = {1.0, 1.0};
+                    transform.Scale = {1.0, 1.0, 1.0};
                 }
             }
 
@@ -92,31 +90,44 @@ namespace Game
             {
                 for (auto [entity, mesh] : mRegistry.GetEntityView<BasicMeshComponent>(archetype))
                 {
-                    mesh.Vertices = {
-                        BasicMeshVertex{{-0.5, -0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
-                        BasicMeshVertex{{0.5, -0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
-                        BasicMeshVertex{{0.5, 0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
-                        BasicMeshVertex{{-0.5, 0.5, 0.5}, {1.0, 0.5, 0.0, 1.0}},
-                        BasicMeshVertex{{-0.5, -0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
-                        BasicMeshVertex{{0.5, -0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
-                        BasicMeshVertex{{0.5, 0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
-                        BasicMeshVertex{{-0.5, 0.5, -0.5}, {0.0, 0.5, 1.0, 1.0}},
-                    };
+                    float radius = 0.5;
+                    uint32_t latitudeSegments = 16;
+                    uint32_t longitudeSegments = 16;
 
-                    mesh.Triangles = {
-                        {0, 1, 2},
-                        {0, 2, 3},
-                        {4, 6, 5},
-                        {4, 7, 6},
-                        {4, 0, 3},
-                        {4, 3, 7},
-                        {1, 5, 6},
-                        {1, 6, 2},
-                        {4, 5, 1},
-                        {4, 1, 0},
-                        {3, 2, 6},
-                        {3, 6, 7},
-                    };
+                    for (uint32_t lat = 0; lat <= latitudeSegments; ++lat)
+                    {
+                        float theta = lat * glm::pi<float>() / latitudeSegments;
+                        float sinTheta = sin(theta);
+                        float cosTheta = cos(theta);
+
+                        for (uint32_t lon = 0; lon <= longitudeSegments; ++lon)
+                        {
+                            float phi = lon * 2.0f * glm::pi<float>() / longitudeSegments;
+                            float sinPhi = sin(phi);
+                            float cosPhi = cos(phi);
+
+                            glm::vec3 pos;
+                            pos.x = radius * sinTheta * cosPhi;
+                            pos.y = radius * cosTheta;
+                            pos.z = radius * sinTheta * sinPhi;
+
+                            glm::vec4 color = {(pos.x + radius) / (2 * radius), (pos.y + radius) / (2 * radius), (pos.z + radius) / (2 * radius), 1.0f};
+
+                            mesh.Vertices.push_back({pos, color});
+                        }
+                    }
+
+                    for (uint32_t lat = 0; lat < latitudeSegments; ++lat)
+                    {
+                        for (uint32_t lon = 0; lon < longitudeSegments; ++lon)
+                        {
+                            uint32_t first = lat * (longitudeSegments + 1) + lon;
+                            uint32_t second = first + longitudeSegments + 1;
+
+                            mesh.Triangles.push_back({first, second, first + 1});
+                            mesh.Triangles.push_back({second, second + 1, first + 1});
+                        }
+                    }
 
                     Resources::BufferDescriptor vertexDescriptor = {
                         .Size = mesh.Vertices.size() * sizeof(BasicMeshVertex),
@@ -146,7 +157,7 @@ namespace Game
                                 .Stage = Resources::ShaderStage::VERTEX,
                             },
                             Resources::ShaderStageSubmissionDescriptor{
-                                .ConstantBuffers = {mConstantBuffer},
+                                .ConstantBuffers = {},
                                 .StorageBuffers = {},
                                 .Stage = Resources::ShaderStage::PIXEL,
                             },
@@ -221,6 +232,7 @@ namespace Game
         auto bufferBitmask = mRegistry.MakeBitmask<ConstantBufferComponent>();
         auto transformBitmask = mRegistry.MakeBitmask<TransformComponent3D>();
         auto renderableBitmask = mRegistry.MakeBitmask<RenderableComponent>();
+        auto meshBitmask = mRegistry.MakeBitmask<BasicMeshComponent>();
         auto playerBitmask = mRegistry.MakeBitmask<PlayerComponent>();
 
         auto commandBuffer = mRenderer.CreateCommandBuffer();
@@ -352,6 +364,39 @@ namespace Game
                 }
             }
 
+            if ((meshBitmask | transformBitmask | bufferBitmask) == (bitmask & (meshBitmask | transformBitmask | bufferBitmask)))
+            {
+                for (auto [entity, transform, buffer] : mRegistry.GetEntityView<TransformComponent3D, ConstantBufferComponent>(archetype))
+                {
+                    static float time = 0.0f;
+                    time += deltaTime;
+
+                    transform.Rotation.y += 30.0f * deltaTime;
+
+                    float scaleAmount = 0.5f + 0.5f * std::sin(time);
+                    transform.Scale = {scaleAmount, scaleAmount, scaleAmount};
+
+                    float radius = 1.5f;
+                    transform.Position.x = radius * std::cos(time);
+                    transform.Position.z = radius * std::sin(time);
+                    transform.Position.y = 0.5f * std::sin(time * 2.0f);
+
+                    glm::fmat4 model = glm::mat4(1.0f);
+                    model = glm::translate(model, transform.Position);
+                    model *= glm::rotate(glm::mat4(1.0f), glm::radians(transform.Rotation.y), glm::vec3(0, 1, 0));
+                    model *= glm::rotate(glm::mat4(1.0f), glm::radians(transform.Rotation.x), glm::vec3(1, 0, 0));
+                    model *= glm::rotate(glm::mat4(1.0f), glm::radians(transform.Rotation.z), glm::vec3(0, 0, 1));
+                    model = glm::scale(model, glm::clamp(transform.Scale, {0.1, 0.1, 0.1}, {1.0, 1.0, 1.0}));
+
+                    Resources::BufferData bufferData = {
+                        .Data = &model,
+                        .Stride = sizeof(glm::fmat4),
+                        .Offset = 0,
+                    };
+                    mRenderer.SetBufferData(buffer.Handle, bufferData);
+                }
+            }
+
             if (renderableBitmask == (bitmask & renderableBitmask))
             {
                 for (auto [entity, renderable] : mRegistry.GetEntityView<RenderableComponent>(archetype))
@@ -382,8 +427,7 @@ namespace Game
 
         Resources::BufferFormatDescriptor constantFormat = {
             .Attributes = {
-                Resources::BufferAttributeType::R32_FLOAT,
-                Resources::BufferAttributeType::R32_FLOAT,
+                Resources::BufferAttributeType::F32_4x4,
             },
         };
 
@@ -397,7 +441,7 @@ namespace Game
 
         Resources::ShaderDescriptor pixelShaderDescriptor = {
             .Stage = Resources::ShaderStage::PIXEL,
-            .ConstantBufferFormats = {constantFormat},
+            .ConstantBufferFormats = {},
             .StorageBufferFormats = {},
             .Path = "assets/shaders/basic.pixel.spv",
             .Function = "PSMain",
@@ -408,7 +452,7 @@ namespace Game
             .VertexBufferFormats = {vertexFormat},
             .RasterState = {
                 .Primitive = Resources::PipelinePrimitive::TRIANGLE_LIST,
-                .FrontFace = Resources::PipelineFrontFace::ANTICLOCKWISE,
+                .FrontFace = Resources::PipelineFrontFace::CLOCKWISE,
                 .PolygonMode = Resources::PipelinePolygonMode::SOLID,
                 .FaceCulling = Resources::PipelineFaceCulling::BACKFACE,
             },
