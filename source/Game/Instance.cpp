@@ -145,14 +145,14 @@ namespace Game
                 }
             }
 
-            if ((renderableBitmask | meshBitmask) == (bitmask & (renderableBitmask | meshBitmask)))
+            if ((renderableBitmask | meshBitmask | bufferBitmask) == (bitmask & (renderableBitmask | meshBitmask | bufferBitmask)))
             {
-                for (auto [entity, mesh, renderable] : mRegistry.GetEntityView<BasicMeshComponent, RenderableComponent>(archetype))
+                for (auto [entity, mesh, renderable, buffer] : mRegistry.GetEntityView<BasicMeshComponent, RenderableComponent, ConstantBufferComponent>(archetype))
                 {
                     Resources::SubmissionDescriptor submissionDescriptor = {
                         .ShaderStages = {
                             Resources::ShaderStageSubmissionDescriptor{
-                                .ConstantBuffers = {mCameraBuffer, mConstantBuffer},
+                                .ConstantBuffers = {mCameraBuffer, buffer.Handle},
                                 .StorageBuffers = {},
                                 .Stage = Resources::ShaderStage::VERTEX,
                             },
