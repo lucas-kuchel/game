@@ -455,7 +455,7 @@ namespace Game
                 .FaceCulling = Resources::PipelineFaceCulling::BACKFACE,
             },
             .DepthState = {
-                .Read = true,
+                .Test = true,
                 .Write = true,
                 .Operation = Resources::DepthCompareOperation::LESS,
             },

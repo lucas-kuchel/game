@@ -33,7 +33,7 @@ namespace Program
     Systems::ContextDescriptor Application::CreateContext()
     {
         return {
-            .Renderer = Systems::RendererBackend::OPENGL,
+            .Renderer = Systems::RendererBackend::METAL,
         };
     }
 
@@ -52,7 +52,7 @@ namespace Program
             .Context = mContext,
             .Window = mWindow,
             .ClearColour = {0.0f, 0.0f, 0.0f, 1.0f},
-            .VSyncMode = Systems::RendererVSyncMode::DISABLED,
+            .VSyncMode = Systems::RendererVSyncMode::STRICT,
         };
     }
 }

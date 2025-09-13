@@ -1140,7 +1140,7 @@ namespace Systems
                 glDisable(GL_CULL_FACE);
             }
 
-            if (pipelineInfo.Descriptor.DepthState.Read)
+            if (pipelineInfo.Descriptor.DepthState.Test)
             {
                 glEnable(GL_DEPTH_TEST);
 

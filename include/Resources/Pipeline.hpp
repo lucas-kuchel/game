@@ -73,9 +73,8 @@ namespace Resources
 
     struct PipelineDepthState
     {
-        bool Read = true;
+        bool Test = true;
         bool Write = true;
-
         DepthCompareOperation Operation = DepthCompareOperation::LESS;
     };
 

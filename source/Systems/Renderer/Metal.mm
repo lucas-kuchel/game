@@ -30,6 +30,7 @@ namespace Systems
     struct MetalPipelineData
     {
         id<MTLRenderPipelineState> State = nil;
+        id<MTLDepthStencilState> DepthStencilState = nil;
 
         std::vector<MetalShaderInfo> ShaderInfo;
 
@@ -40,6 +41,7 @@ namespace Systems
         MTLTriangleFillMode FillMode;
         MTLCullMode CullMode;
         MTLWinding CullWinding;
+        MTLCompareFunction DepthCompare;
 
         MTLPrimitiveType Primitive;
     };
@@ -47,6 +49,9 @@ namespace Systems
     struct MetalSubmissionData
     {
         Resources::SubmissionDescriptor Descriptor;
+
+        std::size_t IndexCount;
+        MTLIndexType IndexType;
     };
 
     struct MetalAttributeTypeInfo
@@ -73,6 +78,10 @@ namespace Systems
         id<MTLCommandQueue> CommandQueue = nil;
         id<MTLCommandBuffer> RasterCommandBuffer = nil;
         id<CAMetalDrawable> CurrentDrawable = nil;
+        id<MTLTexture> DepthTexture = nil;
+
+        NSUInteger DrawableWidth;
+        NSUInteger DrawableHeight;
 
         CAMetalLayer* MetalLayer = nil;
 
@@ -595,6 +604,21 @@ namespace Systems
             return;
         }
 
+        if (mSpecifics->DrawableWidth != mSpecifics->MetalLayer.drawableSize.width || mSpecifics->DrawableHeight != mSpecifics->MetalLayer.drawableSize.height)
+        {
+            MTLTextureDescriptor* depthDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+                                                                                                       width:mSpecifics->MetalLayer.drawableSize.width
+                                                                                                      height:mSpecifics->MetalLayer.drawableSize.height
+                                                                                                   mipmapped:NO];
+            depthDescriptor.storageMode = MTLStorageModePrivate;
+            depthDescriptor.usage = MTLTextureUsageRenderTarget;
+
+            mSpecifics->DepthTexture = [mSpecifics->Device newTextureWithDescriptor:depthDescriptor];
+
+            mSpecifics->DrawableWidth = mSpecifics->MetalLayer.drawableSize.width;
+            mSpecifics->DrawableHeight = mSpecifics->MetalLayer.drawableSize.height;
+        }
+
         mSpecifics->RasterCommandBuffer = [mSpecifics->CommandQueue commandBuffer];
 
         MTLRenderPassDescriptor* clearPass = [MTLRenderPassDescriptor renderPassDescriptor];
@@ -607,6 +631,11 @@ namespace Systems
             mSpecifics->ClearColour.g,
             mSpecifics->ClearColour.b,
             mSpecifics->ClearColour.a);
+
+        clearPass.depthAttachment.texture = mSpecifics->DepthTexture;
+        clearPass.depthAttachment.loadAction = MTLLoadActionClear;
+        clearPass.depthAttachment.storeAction = MTLStoreActionDontCare;
+        clearPass.depthAttachment.clearDepth = 1.0;
 
         id<MTLRenderCommandEncoder> clearEncoder = [mSpecifics->RasterCommandBuffer renderCommandEncoderWithDescriptor:clearPass];
 
@@ -748,6 +777,7 @@ namespace Systems
 
         pipelineDescriptor.vertexDescriptor = [mSpecifics->BuildVertexDescriptor(info) retain];
         pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+        pipelineDescriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
 
         pipelineDescriptor.rasterizationEnabled = YES;
 
@@ -811,6 +841,58 @@ namespace Systems
             }
         }
 
+        switch (descriptor.DepthState.Operation)
+        {
+            case Resources::DepthCompareOperation::ALWAYS:
+            {
+                info.DepthCompare = MTLCompareFunctionAlways;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::EQUAL:
+            {
+                info.DepthCompare = MTLCompareFunctionEqual;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::GREATER:
+            {
+                info.DepthCompare = MTLCompareFunctionGreater;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::GREATER_EQUAL:
+            {
+                info.DepthCompare = MTLCompareFunctionGreaterEqual;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::LESS_EQUAL:
+            {
+                info.DepthCompare = MTLCompareFunctionLessEqual;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::LESS:
+            {
+                info.DepthCompare = MTLCompareFunctionLess;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::NOT_EQUAL:
+            {
+                info.DepthCompare = MTLCompareFunctionNotEqual;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::NEVER:
+            {
+                info.DepthCompare = MTLCompareFunctionNever;
+
+                break;
+            }
+        }
+
         switch (descriptor.RasterState.PolygonMode)
         {
             case Resources::PipelinePolygonMode::SOLID:
@@ -845,6 +927,13 @@ namespace Systems
                                                                     "Metal error info log:\n\n{}",
                                    errorStr.data());
         }
+
+        MTLDepthStencilDescriptor* depthStencilDescriptor = [[MTLDepthStencilDescriptor alloc] init];
+
+        depthStencilDescriptor.depthCompareFunction = info.DepthCompare;
+        depthStencilDescriptor.depthWriteEnabled = info.Descriptor.DepthState.Write;
+
+        info.DepthStencilState = [mSpecifics->Device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
     }
 
     void RendererBackendImplementation<RendererBackend::METAL>::DeletePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor&)
@@ -857,6 +946,31 @@ namespace Systems
         auto& info = mSpecifics->Submissions.Insert(handle.ID, MetalSubmissionData());
 
         info.Descriptor = descriptor;
+
+        auto typeInfo = mSpecifics->GetTypeInfo(descriptor.IndexBufferType);
+        auto& indexBufferData = mSpecifics->Buffers.Get(descriptor.IndexBuffer.ID);
+
+        info.IndexCount = indexBufferData.Descriptor.Size / typeInfo.Size;
+
+        switch (descriptor.IndexBufferType)
+        {
+            case Resources::BufferAttributeType::R16_UINT:
+            {
+                info.IndexType = MTLIndexTypeUInt16;
+
+                break;
+            }
+            case Resources::BufferAttributeType::R32_UINT:
+            {
+                info.IndexType = MTLIndexTypeUInt32;
+
+                break;
+            }
+            default:
+            {
+                return;
+            }
+        }
     }
 
     void RendererBackendImplementation<RendererBackend::METAL>::DeleteSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor&)
@@ -893,9 +1007,19 @@ namespace Systems
             passDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
             passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
 
+            passDescriptor.depthAttachment.texture = mSpecifics->DepthTexture;
+            passDescriptor.depthAttachment.loadAction = MTLLoadActionDontCare;
+            passDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
+            passDescriptor.depthAttachment.clearDepth = 1.0;
+
             id<MTLRenderCommandEncoder> encoder = [mSpecifics->RasterCommandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
 
             [encoder setRenderPipelineState:pipelineInfo.State];
+
+            if (pipelineInfo.Descriptor.DepthState.Test)
+            {
+                [encoder setDepthStencilState:pipelineInfo.DepthStencilState];
+            }
 
             for (std::size_t stageIndex = 0; stageIndex < pipelineInfo.ShaderInfo.size(); stageIndex++)
             {
@@ -945,38 +1069,13 @@ namespace Systems
             }
 
             auto& indexBufferData = mSpecifics->Buffers.Get(submissionInfo.Descriptor.IndexBuffer.ID);
-            MTLIndexType indexType;
-
-            switch (submissionInfo.Descriptor.IndexBufferType)
-            {
-                case Resources::BufferAttributeType::R16_UINT:
-                {
-                    indexType = MTLIndexTypeUInt16;
-
-                    break;
-                }
-                case Resources::BufferAttributeType::R32_UINT:
-                {
-                    indexType = MTLIndexTypeUInt32;
-
-                    break;
-                }
-                default:
-                {
-                    return;
-                }
-            }
-
-            auto typeInfo = mSpecifics->GetTypeInfo(submissionInfo.Descriptor.IndexBufferType);
-
-            std::size_t indexCount = indexBufferData.Descriptor.Size / typeInfo.Size;
 
             [encoder setTriangleFillMode:pipelineInfo.FillMode];
             [encoder setCullMode:pipelineInfo.CullMode];
             [encoder setFrontFacingWinding:pipelineInfo.CullWinding];
             [encoder drawIndexedPrimitives:pipelineInfo.Primitive
-                                indexCount:indexCount
-                                 indexType:indexType
+                                indexCount:submissionInfo.IndexCount
+                                 indexType:submissionInfo.IndexType
                                indexBuffer:indexBufferData.Handle
                          indexBufferOffset:0];
             [encoder endEncoding];
