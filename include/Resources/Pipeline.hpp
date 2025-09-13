@@ -59,6 +59,26 @@ namespace Resources
         DISABLED,
     };
 
+    enum class DepthCompareOperation
+    {
+        NEVER,
+        LESS,
+        NOT_EQUAL,
+        EQUAL,
+        LESS_EQUAL,
+        GREATER_EQUAL,
+        GREATER,
+        ALWAYS,
+    };
+
+    struct PipelineDepthState
+    {
+        bool Read = true;
+        bool Write = true;
+
+        DepthCompareOperation Operation = DepthCompareOperation::LESS;
+    };
+
     struct PipelineRasterState
     {
         PipelinePrimitive Primitive;
@@ -74,6 +94,7 @@ namespace Resources
         std::vector<BufferFormatDescriptor> VertexBufferFormats;
 
         PipelineRasterState RasterState;
+        PipelineDepthState DepthState;
     };
 
     struct PipelineHandle

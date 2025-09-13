@@ -91,8 +91,8 @@ namespace Game
                 for (auto [entity, mesh] : mRegistry.GetEntityView<BasicMeshComponent>(archetype))
                 {
                     float radius = 0.5;
-                    uint32_t latitudeSegments = 16;
-                    uint32_t longitudeSegments = 16;
+                    uint32_t latitudeSegments = 64;
+                    uint32_t longitudeSegments = 64;
 
                     for (uint32_t lat = 0; lat <= latitudeSegments; ++lat)
                     {
@@ -111,7 +111,7 @@ namespace Game
                             pos.y = radius * cosTheta;
                             pos.z = radius * sinTheta * sinPhi;
 
-                            glm::vec4 color = {(pos.x + radius) / (2 * radius), (pos.y + radius) / (2 * radius), (pos.z + radius) / (2 * radius), 1.0f};
+                            glm::vec4 color = {0.8, 0.4, 0.2, 1.0f};
 
                             mesh.Vertices.push_back({pos, color});
                         }
@@ -371,8 +371,6 @@ namespace Game
                     static float time = 0.0f;
                     time += deltaTime;
 
-                    transform.Rotation.y += 30.0f * deltaTime;
-
                     float scaleAmount = 0.5f + 0.5f * std::sin(time);
                     transform.Scale = {scaleAmount, scaleAmount, scaleAmount};
 
@@ -455,6 +453,11 @@ namespace Game
                 .FrontFace = Resources::PipelineFrontFace::CLOCKWISE,
                 .PolygonMode = Resources::PipelinePolygonMode::SOLID,
                 .FaceCulling = Resources::PipelineFaceCulling::BACKFACE,
+            },
+            .DepthState = {
+                .Read = true,
+                .Write = true,
+                .Operation = Resources::DepthCompareOperation::LESS,
             },
         };
 

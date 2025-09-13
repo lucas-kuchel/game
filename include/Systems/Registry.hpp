@@ -378,6 +378,40 @@ namespace Systems
             return (RemoveComponentFromEntity<TQueried>(entity), ...);
         }
 
+        template <typename TComponent>
+        requires(RegistryDescriptor<Ts...>::template Contains<TComponent>)
+        inline TComponent& GetComponent(Resources::EntityHandle entity)
+        {
+            if (!HasEntity(entity) || !EntityHasComponent<TComponent>(entity))
+            {
+                throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE,
+                                       "T& Systems::Registry<D>::GetComponent<T>(Entity):\n"
+                                       "entity does not exist or does not have component (ID = {}, Generation = {})",
+                                       entity.ID, entity.Generation);
+            }
+
+            auto& set = std::get<Types::SparseSet<TComponent>>(mSparseSets);
+
+            return set.GetDense()[set.GetSparse()[entity.ID]];
+        }
+
+        template <typename TComponent>
+        requires(RegistryDescriptor<Ts...>::template Contains<TComponent>)
+        inline const TComponent& GetComponent(Resources::EntityHandle entity) const
+        {
+            if (!HasEntity(entity) || !EntityHasComponent<TComponent>(entity))
+            {
+                throw Debug::Exception(Debug::ErrorCode::OUT_OF_RANGE,
+                                       "const T& Systems::Registry<D>::GetComponent<T>(Entity) const:\n"
+                                       "entity does not exist or does not have component (ID = {}, Generation = {})",
+                                       entity.ID, entity.Generation);
+            }
+
+            const auto& set = std::get<Types::SparseSet<TComponent>>(mSparseSets);
+
+            return set.GetDense()[set.GetSparse()[entity.ID]];
+        }
+
         [[nodiscard]] inline Types::BitsetTree<ArchetypeType, sizeof...(Ts)>& GetArchetypes()
         {
             return mArchetypes;

@@ -27,6 +27,8 @@ namespace Systems
         GLenum FaceCulling = GL_INVALID_ENUM;
         GLenum FrontFace = GL_INVALID_ENUM;
         GLenum PolygonMode = GL_INVALID_ENUM;
+        GLenum DepthOperation = GL_INVALID_ENUM;
+        GLenum DepthWrite = GL_INVALID_ENUM;
 
         std::vector<GLuint> ConstantBufferBindings;
         std::vector<GLuint> StorageBufferBindings;
@@ -645,6 +647,7 @@ namespace Systems
 
         glViewport(0, 0, windowSize[0], windowSize[1]);
         glClearColor(descriptor.ClearColour.r, descriptor.ClearColour.g, descriptor.ClearColour.b, descriptor.ClearColour.a);
+
         glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
     }
 
@@ -788,6 +791,67 @@ namespace Systems
 
                 break;
             }
+        }
+
+        switch (descriptor.DepthState.Operation)
+        {
+            case Resources::DepthCompareOperation::ALWAYS:
+            {
+                info.DepthOperation = GL_ALWAYS;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::EQUAL:
+            {
+                info.DepthOperation = GL_EQUAL;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::GREATER:
+            {
+                info.DepthOperation = GL_GREATER;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::GREATER_EQUAL:
+            {
+                info.DepthOperation = GL_GEQUAL;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::LESS_EQUAL:
+            {
+                info.DepthOperation = GL_LEQUAL;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::LESS:
+            {
+                info.DepthOperation = GL_LESS;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::NOT_EQUAL:
+            {
+                info.DepthOperation = GL_NOTEQUAL;
+
+                break;
+            }
+            case Resources::DepthCompareOperation::NEVER:
+            {
+                info.DepthOperation = GL_NEVER;
+
+                break;
+            }
+        }
+
+        if (descriptor.DepthState.Write)
+        {
+            info.DepthWrite = GL_TRUE;
+        }
+        else
+        {
+            info.DepthWrite = GL_FALSE;
         }
 
         info.ID = glCreateProgram();
@@ -1074,6 +1138,18 @@ namespace Systems
             else
             {
                 glDisable(GL_CULL_FACE);
+            }
+
+            if (pipelineInfo.Descriptor.DepthState.Read)
+            {
+                glEnable(GL_DEPTH_TEST);
+
+                glDepthFunc(pipelineInfo.DepthOperation);
+                glDepthMask(pipelineInfo.DepthWrite);
+            }
+            else
+            {
+                glDisable(GL_DEPTH_TEST);
             }
 
             glPolygonMode(GL_FRONT_AND_BACK, pipelineInfo.PolygonMode);
