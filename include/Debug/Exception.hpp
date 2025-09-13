@@ -23,7 +23,7 @@ namespace Debug
         }
 #else
         template <typename... Ts>
-        inline Exception(std::int32_t, std::format_string<Ts...>, Ts&&...) noexcept
+        inline Exception(ErrorCode, std::format_string<Ts...>, Ts&&...) noexcept
         {
         }
 #endif

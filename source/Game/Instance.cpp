@@ -47,18 +47,18 @@ namespace Game
             {
                 for (auto [entity, player, buffer] : mRegistry.GetEntityView<PlayerComponent, ConstantBufferComponent>(archetype))
                 {
-                    Resources::BufferDescriptor constantDescriptor = {
-                        .Size = 2 * sizeof(float),
-                    };
-
-                    buffer.Handle = mRenderer.CreateBuffer(constantDescriptor);
-
                     float values[2] = {
                         2.0,
                         0.5,
                     };
 
-                    mRenderer.SetBufferData(buffer.Handle, {.Data = values, .Stride = 2 * sizeof(float), .Offset = 0});
+                    Resources::BufferDescriptor constantDescriptor = {
+                        .Size = sizeof(values),
+                    };
+
+                    buffer.Handle = mRenderer.CreateBuffer(constantDescriptor);
+
+                    mRenderer.SetBufferData(buffer.Handle, {.Data = values, .Stride = sizeof(values), .Offset = 0});
 
                     mConstantBuffer = buffer.Handle;
                 }

@@ -59,11 +59,13 @@ namespace Systems
     {
     public:
         RendererBackendImplementationSpecifics(RendererWindow& window)
-            : Window(window)
+            : Window(window), WindowOpenGLLayer(window.CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>())
         {
         }
 
         RendererWindow& Window;
+
+        WindowInteractionLayer<WindowInteractive::OPENGL_LAYER> WindowOpenGLLayer;
 
         Types::SparseSet<OpenGLBufferData> Buffers;
         Types::SparseSet<OpenGLRasterPipelineData> RasterPipelines;
@@ -631,10 +633,8 @@ namespace Systems
             }
         }
 
-        auto layer = mSpecifics->Window.CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>();
-
-        layer.MakeContextCurrent();
-        layer.SetSwapInterval(swapInterval);
+        mSpecifics->WindowOpenGLLayer.MakeContextCurrent();
+        mSpecifics->WindowOpenGLLayer.SetSwapInterval(swapInterval);
 
         if (glewInit() != GLEW_OK)
         {
@@ -663,9 +663,7 @@ namespace Systems
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::EndFrame()
     {
-        auto layer = mSpecifics->Window.CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>();
-
-        layer.SwapBuffers();
+        mSpecifics->WindowOpenGLLayer.SwapBuffers();
     }
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor)
@@ -1088,13 +1086,39 @@ namespace Systems
     }
 
     template <>
-    void RendererBackendImplementation<RendererBackend::OPENGL>::Set<RendererAttribute::VSYNC_MODE>(const RendererAttributeType<RendererAttribute::VSYNC_MODE>::Type&)
+    void RendererBackendImplementation<RendererBackend::OPENGL>::Set<RendererAttribute::VSYNC_MODE>(const RendererAttributeType<RendererAttribute::VSYNC_MODE>::Type& vsyncMode)
     {
+        GLint swapInterval = 0;
+
+        switch (vsyncMode)
+        {
+            case RendererVSyncMode::DISABLED:
+            {
+                swapInterval = 0;
+
+                break;
+            }
+            case RendererVSyncMode::STRICT:
+            {
+                swapInterval = 1;
+
+                break;
+            }
+            case RendererVSyncMode::RELAXED:
+            {
+                swapInterval = -1;
+
+                break;
+            }
+        }
+
+        mSpecifics->WindowOpenGLLayer.SetSwapInterval(swapInterval);
     }
 
     template <>
-    void RendererBackendImplementation<RendererBackend::OPENGL>::Set<RendererAttribute::CLEAR_COLOUR>(const RendererAttributeType<RendererAttribute::CLEAR_COLOUR>::Type&)
+    void RendererBackendImplementation<RendererBackend::OPENGL>::Set<RendererAttribute::CLEAR_COLOUR>(const RendererAttributeType<RendererAttribute::CLEAR_COLOUR>::Type& clearColour)
     {
+        glClearColor(clearColour.r, clearColour.g, clearColour.b, clearColour.a);
     }
 
     RendererBackendImplementationSpecifics* RendererBackendImplementation<RendererBackend::OPENGL>::CreateSpecifics(const RendererDescriptor& descriptor)
