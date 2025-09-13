@@ -19,12 +19,6 @@ namespace Systems
         Resources::BufferDescriptor Descriptor;
     };
 
-    struct OpenGLShaderBindings
-    {
-        std::vector<GLuint> ConstantBufferBindings;
-        std::vector<GLuint> StorageBufferBindings;
-    };
-
     struct OpenGLRasterPipelineData
     {
         GLuint ID = 0;
@@ -34,7 +28,8 @@ namespace Systems
         GLenum FrontFace = GL_INVALID_ENUM;
         GLenum PolygonMode = GL_INVALID_ENUM;
 
-        std::vector<OpenGLShaderBindings> ShaderBindings;
+        std::vector<GLuint> ConstantBufferBindings;
+        std::vector<GLuint> StorageBufferBindings;
 
         bool CullBackface = false;
 
@@ -44,6 +39,11 @@ namespace Systems
     struct OpenGLSubmissionData
     {
         GLuint ID = 0;
+
+        std::vector<GLuint> ConstantBufferHandles;
+        std::vector<GLuint> StorageBufferHandles;
+
+        std::size_t IndexCount;
 
         Resources::SubmissionDescriptor Descriptor;
     };
@@ -538,14 +538,14 @@ namespace Systems
                 {
                     GLuint binding = glsl.get_decoration(constantBuffer.id, spv::DecorationBinding);
 
-                    data.ShaderBindings[i].ConstantBufferBindings.push_back(binding);
+                    data.ConstantBufferBindings.push_back(binding);
                 }
 
                 for (auto& storageBuffer : resources.storage_buffers)
                 {
                     GLuint binding = glsl.get_decoration(storageBuffer.id, spv::DecorationBinding);
 
-                    data.ShaderBindings[i].StorageBufferBindings.push_back(binding);
+                    data.StorageBufferBindings.push_back(binding);
                 }
 
                 if (shaderDescriptor.Stage == Resources::ShaderStage::VERTEX)
@@ -578,7 +578,27 @@ namespace Systems
                 sources.push_back(source);
             }
 
+            DeduplicatePreserveOrder(data.ConstantBufferBindings);
+            DeduplicatePreserveOrder(data.StorageBufferBindings);
+
             return sources;
+        }
+
+        static void DeduplicatePreserveOrder(std::vector<GLuint>& vector)
+        {
+            std::unordered_set<GLuint> seen;
+
+            auto it = vector.begin();
+
+            for (auto iterator = vector.begin(); iterator != vector.end(); iterator++)
+            {
+                if (seen.insert(*iterator).second)
+                {
+                    *it++ = std::move(*iterator);
+                }
+            }
+
+            vector.erase(it, vector.end());
         }
     };
 
@@ -775,8 +795,6 @@ namespace Systems
         info.ID = glCreateProgram();
         info.Descriptor = descriptor;
 
-        info.ShaderBindings.resize(descriptor.Shaders.size());
-
         auto shaderSources = mSpecifics->ConvertShaderBinaries(info);
 
         std::vector<GLuint> shaders;
@@ -900,8 +918,12 @@ namespace Systems
     {
         auto& info = mSpecifics->Submissions.Insert(handle.ID, OpenGLSubmissionData());
         auto& pipelineInfo = mSpecifics->RasterPipelines.Get(descriptor.Pipeline.ID);
+        auto& indexBufferInfo = mSpecifics->Buffers.Get(descriptor.IndexBuffer.ID);
+
+        auto typeSize = mSpecifics->GetTypeSize(descriptor.IndexBufferType);
 
         info.Descriptor = descriptor;
+        info.IndexCount = indexBufferInfo.Descriptor.Size / typeSize;
 
         glCreateVertexArrays(1, &info.ID);
 
@@ -955,9 +977,43 @@ namespace Systems
             bufferIndex++;
         }
 
-        const auto& indexBufferInfo = mSpecifics->Buffers.Get(descriptor.IndexBuffer.ID);
-
         glVertexArrayElementBuffer(info.ID, indexBufferInfo.ID);
+
+        static constexpr Resources::ShaderStage stageOrder[] = {
+            Resources::ShaderStage::VERTEX,
+            Resources::ShaderStage::GEOMETRY,
+            Resources::ShaderStage::PIXEL,
+        };
+
+        for (auto stage : stageOrder)
+        {
+            for (const auto& shader : descriptor.ShaderStages)
+            {
+                if (shader.Stage != stage)
+                {
+                    continue;
+                }
+
+                std::vector<GLuint> constantBufferHandles;
+                std::vector<GLuint> storageBufferHandles;
+
+                for (auto& buffer : shader.ConstantBuffers)
+                {
+                    constantBufferHandles.push_back(mSpecifics->Buffers.Get(buffer.ID).ID);
+                }
+
+                for (auto& buffer : shader.StorageBuffers)
+                {
+                    storageBufferHandles.push_back(mSpecifics->Buffers.Get(buffer.ID).ID);
+                }
+
+                info.ConstantBufferHandles.insert(info.ConstantBufferHandles.end(), constantBufferHandles.begin(), constantBufferHandles.end());
+                info.StorageBufferHandles.insert(info.StorageBufferHandles.end(), storageBufferHandles.begin(), storageBufferHandles.end());
+            }
+        }
+
+        mSpecifics->DeduplicatePreserveOrder(info.ConstantBufferHandles);
+        mSpecifics->DeduplicatePreserveOrder(info.StorageBufferHandles);
     }
 
     void RendererBackendImplementation<RendererBackend::OPENGL>::DeleteSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor&)
@@ -990,33 +1046,24 @@ namespace Systems
         {
             auto& submissionInfo = mSpecifics->Submissions.Get(submission.ID);
             auto& pipelineInfo = mSpecifics->RasterPipelines.Get(submissionInfo.Descriptor.Pipeline.ID);
-            auto& indexBufferInfo = mSpecifics->Buffers.Get(submissionInfo.Descriptor.IndexBuffer.ID);
 
-            auto typeSize = mSpecifics->GetTypeSize(submissionInfo.Descriptor.IndexBufferType);
             auto typeInfo = mSpecifics->GetAttributeFormat(submissionInfo.Descriptor.IndexBufferType);
-
-            auto count = indexBufferInfo.Descriptor.Size / typeSize;
 
             glUseProgram(pipelineInfo.ID);
             glBindVertexArray(submissionInfo.ID);
 
-            for (std::size_t i = 0; i < pipelineInfo.ShaderBindings.size(); i++)
+            for (size_t i = 0; i < pipelineInfo.ConstantBufferBindings.size(); i++)
             {
-                const auto& shaderBindings = pipelineInfo.ShaderBindings[i];
+                auto& bufferID = submissionInfo.ConstantBufferHandles[i];
 
-                for (size_t j = 0; j < shaderBindings.ConstantBufferBindings.size(); j++)
-                {
-                    auto& bufferData = mSpecifics->Buffers.Get(submissionInfo.Descriptor.ShaderStages[i].ConstantBuffers[j].ID);
+                glBindBufferBase(GL_UNIFORM_BUFFER, pipelineInfo.ConstantBufferBindings[i], bufferID);
+            }
 
-                    glBindBufferBase(GL_UNIFORM_BUFFER, shaderBindings.ConstantBufferBindings[j], bufferData.ID);
-                }
+            for (size_t i = 0; i < pipelineInfo.StorageBufferBindings.size(); i++)
+            {
+                auto& bufferID = submissionInfo.StorageBufferHandles[i];
 
-                for (size_t j = 0; j < shaderBindings.StorageBufferBindings.size(); j++)
-                {
-                    auto& bufferData = mSpecifics->Buffers.Get(submissionInfo.Descriptor.ShaderStages[i].StorageBuffers[j].ID);
-
-                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, shaderBindings.StorageBufferBindings[j], bufferData.ID);
-                }
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, pipelineInfo.StorageBufferBindings[i], bufferID);
             }
 
             if (pipelineInfo.CullBackface)
@@ -1032,7 +1079,7 @@ namespace Systems
             }
 
             glPolygonMode(GL_FRONT_AND_BACK, pipelineInfo.PolygonMode);
-            glDrawElements(pipelineInfo.Primitive, count, typeInfo.Type, nullptr);
+            glDrawElements(pipelineInfo.Primitive, submissionInfo.IndexCount, typeInfo.Type, nullptr);
         }
     }
 

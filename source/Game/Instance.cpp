@@ -165,8 +165,8 @@ namespace Game
             {
                 for (auto [entity, player] : mRegistry.GetEntityView<PlayerComponent>(archetype))
                 {
-                    player.Sensitivity = 25.0;
-                    player.Speed = 1.0;
+                    player.Sensitivity = 0.25;
+                    player.Speed = 2.0;
                 }
             }
         }
@@ -279,16 +279,16 @@ namespace Game
 
                     prevCursor = cursorPos;
 
-                    transform.Rotation.y += static_cast<float>(-mouseDelta.x) * player.Sensitivity * deltaTime;
-                    transform.Rotation.x -= static_cast<float>(mouseDelta.y) * player.Sensitivity * deltaTime;
+                    transform.Rotation.y += static_cast<float>(-mouseDelta.x) * player.Sensitivity;
+                    transform.Rotation.x -= static_cast<float>(mouseDelta.y) * player.Sensitivity;
 
                     if (keyboardLayer.GetKeyState(Systems::Key::Q) == Systems::PressableState::HELD)
                     {
-                        transform.Rotation.z += 1.0 * player.Sensitivity * deltaTime;
+                        transform.Rotation.z += 8.0 * player.Speed * deltaTime;
                     }
                     if (keyboardLayer.GetKeyState(Systems::Key::E) == Systems::PressableState::HELD)
                     {
-                        transform.Rotation.z -= 1.0 * player.Sensitivity * deltaTime;
+                        transform.Rotation.z -= 8.0 * player.Speed * deltaTime;
                     }
 
                     transform.Rotation.x = glm::clamp(transform.Rotation.x, -89.0f, 89.0f);

@@ -52,7 +52,7 @@ namespace Program
             .Context = mContext,
             .Window = mWindow,
             .ClearColour = {0.0f, 0.0f, 0.0f, 1.0f},
-            .VSyncMode = Systems::RendererVSyncMode::STRICT,
+            .VSyncMode = Systems::RendererVSyncMode::DISABLED,
         };
     }
 }
