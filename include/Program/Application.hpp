@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Systems/Context.hpp>
-#include <Systems/Renderer.hpp>
-#include <Systems/Window.hpp>
+#include <Renderer/Systems/Device.hpp>
+#include <Renderer/Systems/Instance.hpp>
+#include <Renderer/Systems/Swapchain.hpp>
 
-#include <Game/Instance.hpp>
+#include <Systems/Window.hpp>
 
 namespace Program
 {
@@ -21,12 +21,7 @@ namespace Program
     private:
         Systems::Context mContext;
         Systems::Window mWindow;
-        Systems::Renderer mRenderer;
 
-        Game::Instance mInstance;
-
-        Systems::ContextDescriptor CreateContext();
-        Systems::WindowDescriptor CreateWindow();
-        Systems::RendererDescriptor CreateRenderer();
+        Renderer::Systems::Instance mInstance;
     };
 }
