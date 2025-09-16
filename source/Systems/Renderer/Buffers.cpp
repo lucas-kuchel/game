@@ -1,38 +1,38 @@
 #include <Systems/Renderer.hpp>
 
+#include <Systems/Renderer/Metal.hpp>
+#include <Systems/Renderer/OpenGL.hpp>
+#include <Systems/Renderer/Vulkan.hpp>
+
 namespace Systems
 {
-    Resources::BufferHandle Renderer::CreateBuffer(const Resources::BufferDescriptor& descriptor)
+    Resources::BufferHandle Renderer::AllocateBuffer(std::size_t size)
     {
         Resources::BufferHandle handle;
 
-        if (mBufferFreeList.empty())
+        if (mBuffers.FreeList.empty())
         {
-            handle.ID = mBufferGenerations.size();
-
-            mBufferGenerations.push_back(0);
-
-            mBufferData.Insert(handle.ID, descriptor);
+            handle.ID = mBuffers.Generations.size();
+            mBuffers.Generations.push_back(0);
         }
         else
         {
-            handle.ID = mBufferFreeList.back();
-            handle.Generation = mBufferGenerations[handle.ID];
-
-            mBufferFreeList.pop_back();
-
-            mBufferData.Insert(handle.ID, descriptor);
+            handle.ID = mBuffers.FreeList.back();
+            handle.Generation = mBuffers.Generations[handle.ID];
+            mBuffers.FreeList.pop_back();
         }
 
+        auto& info = mBuffers.Data.Insert(handle.ID, Resources::BufferData{.Size = size, .BackendMetadata = nullptr});
+
         std::visit([&](auto& backend)
-                   { backend->CreateBuffer(handle, descriptor); }, mBackend);
+                   { backend->AllocateBuffer(info); }, mBackend);
 
         return handle;
     }
 
-    Resources::BufferDescriptor Renderer::GetBufferData(const Resources::BufferHandle& handle)
+    Resources::BufferData Renderer::GetBufferData(const Resources::BufferHandle& handle)
     {
-        if (!mBufferData.Contains(handle.ID) || mBufferGenerations[handle.ID] != handle.Generation)
+        if (!mBuffers.Data.Contains(handle.ID) || mBuffers.Generations[handle.ID] != handle.Generation)
         {
             throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
                                    "Resources::BufferDescriptor Systems::Renderer::GetBufferInfo(const Resources::BufferHandle&):\n"
@@ -40,12 +40,12 @@ namespace Systems
                                    "provided buffer does not exist");
         }
 
-        return mBufferData.Get(handle.ID);
+        return mBuffers.Data.Get(handle.ID);
     }
 
-    void Renderer::SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data)
+    void Renderer::UploadBufferData(const Resources::BufferHandle& handle, const Resources::BufferUploadDescriptor& upload)
     {
-        if (!mBufferData.Contains(handle.ID) || mBufferGenerations[handle.ID] != handle.Generation)
+        if (!mBuffers.Data.Contains(handle.ID) || mBuffers.Generations[handle.ID] != handle.Generation)
         {
             throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
                                    "void Systems::Renderer::SetBufferData(const Resources::BufferHandle&, const Resources::BufferData&):\n"
@@ -53,9 +53,9 @@ namespace Systems
                                    "provided buffer does not exist");
         }
 
-        auto& info = mBufferData.Get(handle.ID);
+        auto& info = mBuffers.Data.Get(handle.ID);
 
-        if (data.Stride + data.Offset > info.Size)
+        if (upload.Stride + upload.Offset > info.Size)
         {
             throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
                                    "void Systems::Renderer::SetBufferData(const Resources::BufferHandle&, const Resources::BufferData&):\n"
@@ -64,12 +64,12 @@ namespace Systems
         }
 
         std::visit([&](auto& backend)
-                   { backend->SetBufferData(handle, info, data); }, mBackend);
+                   { backend->UploadBufferData(info, upload); }, mBackend);
     }
 
-    void Renderer::DeleteBuffer(const Resources::BufferHandle& handle)
+    void Renderer::DeallocateBuffer(const Resources::BufferHandle& handle)
     {
-        if (!mBufferData.Contains(handle.ID) || mBufferGenerations[handle.ID] != handle.Generation)
+        if (!mBuffers.Data.Contains(handle.ID) || mBuffers.Generations[handle.ID] != handle.Generation)
         {
             throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
                                    "void Systems::Renderer::DeleteBuffer(const Resources::BufferHandle&):\n"
@@ -77,13 +77,13 @@ namespace Systems
                                    "provided buffer does not exist");
         }
 
-        auto& info = mBufferData.Get(handle.ID);
+        auto& info = mBuffers.Data.Get(handle.ID);
 
         std::visit([&](auto& backend)
-                   { backend->DeleteBuffer(handle, info); }, mBackend);
+                   { backend->DeallocateBuffer(info); }, mBackend);
 
-        mBufferGenerations[handle.ID]++;
-        mBufferFreeList.push_back(handle.ID);
-        mBufferData.Remove(handle.ID);
+        mBuffers.Generations[handle.ID]++;
+        mBuffers.FreeList.push_back(handle.ID);
+        mBuffers.Data.Remove(handle.ID);
     }
 }

@@ -18,8 +18,7 @@ namespace Systems
 
         switch (mRenderer)
         {
-            case RendererBackend::METAL:
-            {
+            case RendererBackend::Metal:
 #if !defined(PLATFORM_APPLE)
                 throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::Context::Context():\n"
                                                                            "\n"
@@ -27,9 +26,7 @@ namespace Systems
                                                                            "change Systems::ContextDescriptor::Renderer to a supported API for this platform");
 #endif
                 break;
-            }
-            case RendererBackend::VULKAN:
-            {
+            case RendererBackend::Vulkan:
 #if defined(PLATFORM_APPLE)
                 throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::Context::Context():\n"
                                                                            "\n"
@@ -37,9 +34,7 @@ namespace Systems
                                                                            "change Systems::ContextDescriptor::Renderer to Metal for macOS");
 #endif
                 break;
-            }
-            case RendererBackend::OPENGL:
-            {
+            case RendererBackend::OpenGL:
 #if defined(PLATFORM_APPLE)
                 throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::Context::Context():\n"
                                                                            "\n"
@@ -47,7 +42,6 @@ namespace Systems
                                                                            "change Systems::ContextDescriptor::Renderer to Metal for macOS");
 #endif
                 break;
-            }
         }
     }
 
@@ -62,7 +56,7 @@ namespace Systems
     }
 
     template <>
-    const RendererBackend& Context::Get<ContextAttribute::RENDERER>() const
+    const RendererBackend& Context::Get<ContextAttribute::Renderer>() const
     {
         return mRenderer;
     }

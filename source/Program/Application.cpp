@@ -19,20 +19,20 @@ namespace Program
     void Application::Update()
     {
         mContext.Update();
-        mWindow.Update();
-        mRenderer.BeginFrame();
-        mRenderer.EndFrame();
+        mWindow.ManageEvents();
+        mRenderer.Clear();
+        mRenderer.Present();
     }
 
     bool Application::ShouldUpdate() const
     {
-        return mWindow.Get<Systems::WindowAttribute::STATUS>() == Systems::WindowStatus::ACTIVE;
+        return mWindow.Get<Systems::WindowAttribute::Status>() == Systems::WindowStatus::Active;
     }
 
     Systems::ContextDescriptor Application::CreateContext()
     {
         return {
-            .Renderer = Systems::RendererBackend::OPENGL,
+            .Renderer = Systems::RendererBackend::OpenGL,
         };
     }
 
@@ -51,7 +51,7 @@ namespace Program
             .Context = mContext,
             .Window = mWindow,
             .ClearColour = {0.0f, 0.0f, 0.0f, 1.0f},
-            .VSyncMode = Systems::RendererVSyncMode::STRICT,
+            .VSyncMode = Systems::RendererVSyncMode::Enabled,
         };
     }
 }

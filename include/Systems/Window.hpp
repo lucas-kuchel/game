@@ -26,25 +26,26 @@ namespace Systems
 
     enum class WindowAttribute
     {
-        TITLE,
-        SIZE,
-        STATUS,
+        Title,
+        Size,
+        Status,
     };
 
     enum class WindowStatus
     {
-        ACTIVE,
-        INACTIVE,
+        Active,
+        Inactive,
     };
 
     enum class WindowInteractive
     {
-        OPENGL_LAYER,
-        VULKAN_LAYER,
-        COCOA_LAYER,
+        OpenGL,
+        Vulkan,
 
-        KEYBOARD_LAYER,
-        MOUSE_LAYER,
+        CocoaBackend,
+
+        KeyboardInputs,
+        MouseInputs,
     };
 
     enum class Key
@@ -184,7 +185,7 @@ namespace Systems
     class WindowInteractionLayer;
 
     template <>
-    class WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>
+    class WindowInteractionLayer<WindowInteractive::OpenGL>
     {
     private:
         friend class Window;
@@ -200,7 +201,7 @@ namespace Systems
     };
 
     template <>
-    class WindowInteractionLayer<WindowInteractive::VULKAN_LAYER>
+    class WindowInteractionLayer<WindowInteractive::Vulkan>
     {
     private:
         friend class Window;
@@ -215,7 +216,7 @@ namespace Systems
     };
 
     template <>
-    class WindowInteractionLayer<WindowInteractive::COCOA_LAYER>
+    class WindowInteractionLayer<WindowInteractive::CocoaBackend>
     {
     private:
         friend class Window;
@@ -231,7 +232,7 @@ namespace Systems
     struct InputState;
 
     template <>
-    class WindowInteractionLayer<WindowInteractive::KEYBOARD_LAYER>
+    class WindowInteractionLayer<WindowInteractive::KeyboardInputs>
     {
     private:
         friend class Window;
@@ -246,7 +247,7 @@ namespace Systems
     };
 
     template <>
-    class WindowInteractionLayer<WindowInteractive::MOUSE_LAYER>
+    class WindowInteractionLayer<WindowInteractive::MouseInputs>
     {
     private:
         friend class Window;
@@ -269,19 +270,19 @@ namespace Systems
     struct WindowAttributeType;
 
     template <>
-    struct WindowAttributeType<WindowAttribute::SIZE>
+    struct WindowAttributeType<WindowAttribute::Size>
     {
         using Type = WindowSize;
     };
 
     template <>
-    struct WindowAttributeType<WindowAttribute::TITLE>
+    struct WindowAttributeType<WindowAttribute::Title>
     {
         using Type = WindowTitle;
     };
 
     template <>
-    struct WindowAttributeType<WindowAttribute::STATUS>
+    struct WindowAttributeType<WindowAttribute::Status>
     {
         using Type = WindowStatus;
     };
@@ -300,12 +301,7 @@ namespace Systems
         Window(const WindowDescriptor& descriptor);
         ~Window();
 
-        Window(const Window&) = delete;
-        Window& operator=(const Window&) = delete;
-        Window(Window&&) = delete;
-        Window& operator=(Window&&) = delete;
-
-        void Update();
+        void ManageEvents();
 
         template <WindowAttribute A>
         const WindowAttributeType<A>::Type& Get() const;
@@ -329,11 +325,13 @@ namespace Systems
         template <WindowInteractive I>
         void ValidateInteractionLayerRequest() const
         {
+            auto& renderer = mContext.Get<ContextAttribute::Renderer>();
+
             switch (I)
             {
-                case WindowInteractive::OPENGL_LAYER:
+                case WindowInteractive::OpenGL:
                 {
-                    if (mContext.get().Get<ContextAttribute::RENDERER>() != RendererBackend::OPENGL)
+                    if (renderer != RendererBackend::OpenGL)
                     {
                         throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::OPENGL> Systems::Window::CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>():\n"
                                                                                    "invalid argument error\n"
@@ -342,9 +340,9 @@ namespace Systems
 
                     break;
                 }
-                case WindowInteractive::VULKAN_LAYER:
+                case WindowInteractive::Vulkan:
                 {
-                    if (mContext.get().Get<ContextAttribute::RENDERER>() != RendererBackend::VULKAN)
+                    if (renderer != RendererBackend::Vulkan)
                     {
                         throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::VULKAN>():\n"
                                                                                    "invalid argument error\n"
@@ -353,9 +351,9 @@ namespace Systems
 
                     break;
                 }
-                case WindowInteractive::COCOA_LAYER:
+                case WindowInteractive::CocoaBackend:
                 {
-                    if (mContext.get().Get<ContextAttribute::RENDERER>() != RendererBackend::METAL)
+                    if (renderer != RendererBackend::Metal)
                     {
                         throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::COCOA_LAYER>():\n"
                                                                                    "invalid argument error\n"
@@ -371,11 +369,11 @@ namespace Systems
             }
         }
 
-        std::reference_wrapper<WindowContext> mContext;
+        WindowContext& mContext;
 
         WindowTitle mTitle;
         WindowSize mSize;
-        WindowStatus mStatus = WindowStatus::INACTIVE;
+        WindowStatus mStatus = WindowStatus::Inactive;
 
         bool mTitleDirty = false;
         bool mSizeDirty = false;

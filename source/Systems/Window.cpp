@@ -506,12 +506,12 @@ namespace Systems
         state->Scroll.Offsets[1] += yoffset;
     }
 
-    WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>::WindowInteractionLayer(void* handle)
+    WindowInteractionLayer<WindowInteractive::OpenGL>::WindowInteractionLayer(void* handle)
         : mHandle(handle)
     {
     }
 
-    WindowInteractionLayer<WindowInteractive::VULKAN_LAYER>::WindowInteractionLayer(void* handle)
+    WindowInteractionLayer<WindowInteractive::Vulkan>::WindowInteractionLayer(void* handle)
         : mHandle(handle)
     {
     }
@@ -519,23 +519,23 @@ namespace Systems
     Window::Window(const WindowDescriptor& descriptor)
         : mContext(descriptor.Context), mTitle(descriptor.Title), mSize(descriptor.Size)
     {
-        const RendererBackend& rendererBackend = descriptor.Context.get().template Get<ContextAttribute::RENDERER>();
+        const RendererBackend& rendererBackend = descriptor.Context.get().template Get<ContextAttribute::Renderer>();
 
         switch (rendererBackend)
         {
-            case RendererBackend::OPENGL:
+            case RendererBackend::OpenGL:
             {
                 GL_Init();
 
                 break;
             }
-            case RendererBackend::VULKAN:
+            case RendererBackend::Vulkan:
             {
                 VK_Init();
 
                 break;
             }
-            case RendererBackend::METAL:
+            case RendererBackend::Metal:
             {
                 MTL_Init();
 
@@ -562,7 +562,7 @@ namespace Systems
         glfwSetCursorPosCallback(static_cast<GLFWwindow*>(mHandle), CursorCallback);
         glfwSetScrollCallback(static_cast<GLFWwindow*>(mHandle), ScrollCallback);
 
-        mStatus = WindowStatus::ACTIVE;
+        mStatus = WindowStatus::Active;
     }
 
     Window::~Window()
@@ -576,7 +576,7 @@ namespace Systems
         mHandle = nullptr;
     }
 
-    void Window::Update()
+    void Window::ManageEvents()
     {
         if (mSizeDirty)
         {
@@ -602,7 +602,7 @@ namespace Systems
         {
             bool should = false;
 
-            if (mStatus == WindowStatus::INACTIVE)
+            if (mStatus == WindowStatus::Inactive)
             {
                 should = true;
             }
@@ -615,11 +615,11 @@ namespace Systems
 
             if (should)
             {
-                mStatus = WindowStatus::INACTIVE;
+                mStatus = WindowStatus::Inactive;
             }
             else
             {
-                mStatus = WindowStatus::ACTIVE;
+                mStatus = WindowStatus::Active;
             }
         }
 
@@ -685,39 +685,39 @@ namespace Systems
     }
 
     template <>
-    const WindowSize& Window::Get<WindowAttribute::SIZE>() const
+    const WindowSize& Window::Get<WindowAttribute::Size>() const
     {
         return mSize;
     }
 
     template <>
-    const WindowTitle& Window::Get<WindowAttribute::TITLE>() const
+    const WindowTitle& Window::Get<WindowAttribute::Title>() const
     {
         return mTitle;
     }
 
     template <>
-    const WindowStatus& Window::Get<WindowAttribute::STATUS>() const
+    const WindowStatus& Window::Get<WindowAttribute::Status>() const
     {
         return mStatus;
     }
 
     template <>
-    void Window::Set<WindowAttribute::SIZE>(const WindowSize& value)
+    void Window::Set<WindowAttribute::Size>(const WindowSize& value)
     {
         mSize = value;
         mSizeDirty = true;
     }
 
     template <>
-    void Window::Set<WindowAttribute::TITLE>(const WindowTitle& value)
+    void Window::Set<WindowAttribute::Title>(const WindowTitle& value)
     {
         mTitle = value;
         mTitleDirty = true;
     }
 
     template <>
-    void Window::Set<WindowAttribute::STATUS>(const WindowStatus& value)
+    void Window::Set<WindowAttribute::Status>(const WindowStatus& value)
     {
         mStatus = value;
         mStatusDirty = true;
@@ -749,22 +749,22 @@ namespace Systems
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     }
 
-    void WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>::MakeContextCurrent()
+    void WindowInteractionLayer<WindowInteractive::OpenGL>::MakeContextCurrent()
     {
         glfwMakeContextCurrent(static_cast<GLFWwindow*>(mHandle));
     }
 
-    void WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>::SwapBuffers()
+    void WindowInteractionLayer<WindowInteractive::OpenGL>::SwapBuffers()
     {
         glfwSwapBuffers(static_cast<GLFWwindow*>(mHandle));
     }
 
-    void WindowInteractionLayer<WindowInteractive::OPENGL_LAYER>::SetSwapInterval(int interval)
+    void WindowInteractionLayer<WindowInteractive::OpenGL>::SetSwapInterval(int interval)
     {
         glfwSwapInterval(interval);
     }
 
-    std::vector<std::string_view> WindowInteractionLayer<WindowInteractive::VULKAN_LAYER>::GetRequiredInstanceExtensions()
+    std::vector<std::string_view> WindowInteractionLayer<WindowInteractive::Vulkan>::GetRequiredInstanceExtensions()
     {
         std::uint32_t count = 0;
 
@@ -782,7 +782,7 @@ namespace Systems
         return {extensions, extensions + count};
     }
 
-    VkSurfaceKHR WindowInteractionLayer<WindowInteractive::VULKAN_LAYER>::CreateWindowSurface(VkInstance instance, const VkAllocationCallbacks* allocator)
+    VkSurfaceKHR WindowInteractionLayer<WindowInteractive::Vulkan>::CreateWindowSurface(VkInstance instance, const VkAllocationCallbacks* allocator)
     {
         VkSurfaceKHR surface;
 
@@ -799,12 +799,12 @@ namespace Systems
         return surface;
     }
 
-    WindowInteractionLayer<WindowInteractive::COCOA_LAYER>::WindowInteractionLayer(void* handle)
+    WindowInteractionLayer<WindowInteractive::CocoaBackend>::WindowInteractionLayer(void* handle)
         : mHandle(handle)
     {
     }
 
-    void* WindowInteractionLayer<WindowInteractive::COCOA_LAYER>::GetCocoaWindow()
+    void* WindowInteractionLayer<WindowInteractive::CocoaBackend>::GetCocoaWindow()
     {
 #if defined(PLATFORM_APPLE)
         return glfwGetCocoaWindow(static_cast<GLFWwindow*>(mHandle));
@@ -818,7 +818,7 @@ namespace Systems
                                "\t- macOS");
     }
 
-    WindowInteractionLayer<WindowInteractive::KEYBOARD_LAYER>::WindowInteractionLayer(void* handle)
+    WindowInteractionLayer<WindowInteractive::KeyboardInputs>::WindowInteractionLayer(void* handle)
         : mHandle(handle)
     {
         mState = static_cast<InputState*>(glfwGetWindowUserPointer(static_cast<GLFWwindow*>(mHandle)));
@@ -831,12 +831,12 @@ namespace Systems
         }
     }
 
-    PressableState WindowInteractionLayer<WindowInteractive::KEYBOARD_LAYER>::GetKeyState(Key key) const
+    PressableState WindowInteractionLayer<WindowInteractive::KeyboardInputs>::GetKeyState(Key key) const
     {
         return mState->Keys[static_cast<size_t>(key)];
     }
 
-    WindowInteractionLayer<WindowInteractive::MOUSE_LAYER>::WindowInteractionLayer(void* handle)
+    WindowInteractionLayer<WindowInteractive::MouseInputs>::WindowInteractionLayer(void* handle)
         : mHandle(handle)
     {
         mState = static_cast<InputState*>(glfwGetWindowUserPointer(static_cast<GLFWwindow*>(mHandle)));
@@ -849,22 +849,22 @@ namespace Systems
         }
     }
 
-    PressableState WindowInteractionLayer<WindowInteractive::MOUSE_LAYER>::GetButtonState(MouseButton button) const
+    PressableState WindowInteractionLayer<WindowInteractive::MouseInputs>::GetButtonState(MouseButton button) const
     {
         return mState->Buttons[static_cast<size_t>(button)];
     }
 
-    ScrollState WindowInteractionLayer<WindowInteractive::MOUSE_LAYER>::GetScrollState() const
+    ScrollState WindowInteractionLayer<WindowInteractive::MouseInputs>::GetScrollState() const
     {
         return mState->Scroll;
     }
 
-    CursorState WindowInteractionLayer<WindowInteractive::MOUSE_LAYER>::GetCursorState() const
+    CursorState WindowInteractionLayer<WindowInteractive::MouseInputs>::GetCursorState() const
     {
         return mState->Cursor;
     }
 
-    void WindowInteractionLayer<WindowInteractive::MOUSE_LAYER>::SetCursorState(const CursorState& state)
+    void WindowInteractionLayer<WindowInteractive::MouseInputs>::SetCursorState(const CursorState& state)
     {
         mState->Cursor = state;
 

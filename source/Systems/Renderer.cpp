@@ -1,5 +1,9 @@
 #include <Systems/Renderer.hpp>
 
+#include <Systems/Renderer/Metal.hpp>
+#include <Systems/Renderer/OpenGL.hpp>
+#include <Systems/Renderer/Vulkan.hpp>
+
 namespace Systems
 {
     Renderer::Renderer(const RendererDescriptor& descriptor)
@@ -7,25 +11,25 @@ namespace Systems
           mVSyncMode(descriptor.VSyncMode), mBackend(CreateBackend(descriptor))
     {
         std::visit([this](auto& backend)
-                   { backend->template Set<RendererAttribute::CLEAR_COLOUR>(mClearColour); }, mBackend);
+                   { backend->template Set<RendererAttribute::ClearColour>(mClearColour); }, mBackend);
     }
 
     Renderer::~Renderer()
     {
     }
 
-    void Renderer::BeginFrame()
+    void Renderer::Clear()
     {
         std::visit([](auto& backend)
-                   { backend->BeginFrame(); }, mBackend);
+                   { backend->Clear(); }, mBackend);
     }
 
-    void Renderer::EndFrame()
+    void Renderer::Present()
     {
         if (mClearColourDirty)
         {
             std::visit([this](auto& backend)
-                       { backend->template Set<RendererAttribute::CLEAR_COLOUR>(mClearColour); }, mBackend);
+                       { backend->template Set<RendererAttribute::ClearColour>(mClearColour); }, mBackend);
 
             mClearColourDirty = false;
         }
@@ -33,36 +37,36 @@ namespace Systems
         if (mVSyncModeDirty)
         {
             std::visit([this](auto& backend)
-                       { backend->template Set<RendererAttribute::VSYNC_MODE>(mVSyncMode); }, mBackend);
+                       { backend->template Set<RendererAttribute::VSyncMode>(mVSyncMode); }, mBackend);
 
             mVSyncModeDirty = false;
         }
 
         std::visit([](auto& backend)
-                   { backend->EndFrame(); }, mBackend);
+                   { backend->Present(); }, mBackend);
     }
 
     template <>
-    const RendererAttributeType<RendererAttribute::CLEAR_COLOUR>::Type& Renderer::Get<RendererAttribute::CLEAR_COLOUR>() const
+    const RendererAttributeType<RendererAttribute::ClearColour>::Type& Renderer::Get<RendererAttribute::ClearColour>() const
     {
         return mClearColour;
     }
 
     template <>
-    const RendererAttributeType<RendererAttribute::VSYNC_MODE>::Type& Renderer::Get<RendererAttribute::VSYNC_MODE>() const
+    const RendererAttributeType<RendererAttribute::VSyncMode>::Type& Renderer::Get<RendererAttribute::VSyncMode>() const
     {
         return mVSyncMode;
     }
 
     template <>
-    void Renderer::Set<RendererAttribute::CLEAR_COLOUR>(const RendererAttributeType<RendererAttribute::CLEAR_COLOUR>::Type& value)
+    void Renderer::Set<RendererAttribute::ClearColour>(const RendererClearColour& value)
     {
         mClearColour = value;
         mClearColourDirty = true;
     }
 
     template <>
-    void Renderer::Set<RendererAttribute::VSYNC_MODE>(const RendererAttributeType<RendererAttribute::VSYNC_MODE>::Type& value)
+    void Renderer::Set<RendererAttribute::VSyncMode>(const RendererVSyncMode& value)
     {
         mVSyncMode = value;
         mVSyncModeDirty = true;
@@ -70,19 +74,28 @@ namespace Systems
 
     RendererBackendVariant Renderer::CreateBackend(const RendererDescriptor& descriptor)
     {
-        switch (descriptor.Context.Get<ContextAttribute::RENDERER>())
+        RendererBackendDescriptor backendDescriptor = {
+            .Submissions = mSubmissions,
+            .RasterPipelines = mRasterPipelines,
+            .Buffers = mBuffers,
+            .Window = descriptor.Window,
+            .ClearColour = descriptor.ClearColour,
+            .VSyncMode = descriptor.VSyncMode,
+        };
+
+        switch (descriptor.Context.Get<ContextAttribute::Renderer>())
         {
-            case RendererBackend::OPENGL:
+            case RendererBackend::OpenGL:
             {
-                return std::make_unique<RendererBackendImplementation<RendererBackend::OPENGL>>(descriptor);
+                return std::make_unique<RendererBackendImplementation<RendererBackend::OpenGL>>(backendDescriptor);
             }
-            case RendererBackend::VULKAN:
+            case RendererBackend::Vulkan:
             {
-                return std::make_unique<RendererBackendImplementation<RendererBackend::VULKAN>>(descriptor);
+                return std::make_unique<RendererBackendImplementation<RendererBackend::Vulkan>>(backendDescriptor);
             }
-            case RendererBackend::METAL:
+            case RendererBackend::Metal:
             {
-                return std::make_unique<RendererBackendImplementation<RendererBackend::METAL>>(descriptor);
+                return std::make_unique<RendererBackendImplementation<RendererBackend::Metal>>(backendDescriptor);
             }
         }
 

@@ -4,21 +4,21 @@ namespace Systems
 {
     enum class RendererBackend
     {
-        OPENGL,
-        VULKAN,
-        METAL,
+        OpenGL,
+        Vulkan,
+        Metal,
     };
 
     enum class ContextAttribute
     {
-        RENDERER,
+        Renderer,
     };
 
     template <ContextAttribute A>
     struct ContextAttributeType;
 
     template <>
-    struct ContextAttributeType<ContextAttribute::RENDERER>
+    struct ContextAttributeType<ContextAttribute::Renderer>
     {
         using Type = RendererBackend;
     };

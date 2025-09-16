@@ -1,23 +1,32 @@
 #pragma once
 
-#include <Systems/Renderer/Backends.hpp>
-#include <Systems/Renderer/Commands.hpp>
+#include <Systems/Context.hpp>
+#include <Systems/Window.hpp>
+
+#include <Resources/Buffers.hpp>
+#include <Resources/Pipelines.hpp>
+#include <Resources/Submissions.hpp>
+
+#include <Types/SparseSet.hpp>
 
 #include <glm/glm.hpp>
 
+#include <memory>
+#include <variant>
+
 namespace Systems
 {
-    enum class RendererAttribute : std::uint32_t
+    enum class RendererAttribute
     {
-        VSYNC_MODE,
-        CLEAR_COLOUR,
+        VSyncMode,
+        ClearColour,
     };
 
-    enum class RendererVSyncMode : std::uint32_t
+    enum class RendererVSyncMode
     {
-        STRICT,
-        RELAXED,
-        DISABLED,
+        Enabled,
+        AllowLate,
+        Disabled,
     };
 
     using RendererClearColour = glm::fvec4;
@@ -30,23 +39,52 @@ namespace Systems
         RendererWindow& Window;
 
         RendererClearColour ClearColour = {0.0f, 0.0f, 0.0f, 1.0f};
-        RendererVSyncMode VSyncMode = RendererVSyncMode::STRICT;
+        RendererVSyncMode VSyncMode = RendererVSyncMode::Enabled;
     };
 
     template <RendererAttribute A>
     struct RendererAttributeType;
 
     template <>
-    struct RendererAttributeType<RendererAttribute::VSYNC_MODE>
+    struct RendererAttributeType<RendererAttribute::VSyncMode>
     {
         using Type = RendererVSyncMode;
     };
 
     template <>
-    struct RendererAttributeType<RendererAttribute::CLEAR_COLOUR>
+    struct RendererAttributeType<RendererAttribute::ClearColour>
     {
         using Type = RendererClearColour;
     };
+
+    template <typename T>
+    struct ResourceRegistry
+    {
+        Types::SparseSet<T> Data;
+
+        std::vector<std::size_t> FreeList;
+        std::vector<std::size_t> Generations;
+    };
+
+    template <RendererBackend>
+    class RendererBackendImplementation;
+
+    struct RendererBackendDescriptor
+    {
+        ResourceRegistry<Resources::SubmissionData>& Submissions;
+        ResourceRegistry<Resources::RasterPipelineData>& RasterPipelines;
+        ResourceRegistry<Resources::BufferData>& Buffers;
+
+        RendererWindow& Window;
+
+        RendererClearColour ClearColour;
+        RendererVSyncMode VSyncMode;
+    };
+
+    using RendererBackendVariant = std::variant<
+        std::unique_ptr<RendererBackendImplementation<RendererBackend::OpenGL>>,
+        std::unique_ptr<RendererBackendImplementation<RendererBackend::Vulkan>>,
+        std::unique_ptr<RendererBackendImplementation<RendererBackend::Metal>>>;
 
     class Renderer
     {
@@ -54,24 +92,24 @@ namespace Systems
         Renderer(const RendererDescriptor& descriptor);
         ~Renderer();
 
-        void BeginFrame();
-        void EndFrame();
+        void Clear();
+        void Present();
 
-        Resources::BufferHandle CreateBuffer(const Resources::BufferDescriptor& descriptor);
-        Resources::BufferDescriptor GetBufferData(const Resources::BufferHandle& handle);
-        void SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferData& data);
-        void DeleteBuffer(const Resources::BufferHandle& handle);
+        Resources::BufferHandle AllocateBuffer(std::size_t size);
+        Resources::BufferData GetBufferData(const Resources::BufferHandle& handle);
+
+        void UploadBufferData(const Resources::BufferHandle& handle, const Resources::BufferUploadDescriptor& upload);
+        void DeallocateBuffer(const Resources::BufferHandle& handle);
 
         Resources::PipelineHandle CreatePipeline(const Resources::RasterPipelineDescriptor& descriptor);
-        Resources::RasterPipelineDescriptor GetRasterPipelineInfo(const Resources::PipelineHandle& handle);
+        Resources::RasterPipelineData GetRasterPipelineData(const Resources::PipelineHandle& handle);
+
         void DeletePipeline(const Resources::PipelineHandle& handle);
 
         Resources::SubmissionHandle CreateSubmission(Resources::SubmissionDescriptor& descriptor);
-        Resources::SubmissionDescriptor GetSubmissionInfo(const Resources::SubmissionHandle& handle);
-        void DeleteSubmission(const Resources::SubmissionHandle& handle);
+        Resources::SubmissionData GetSubmissionData(const Resources::SubmissionHandle& handle);
 
-        CommandBuffer CreateCommandBuffer();
-        void DrawCommandBuffer(const CommandBuffer& buffer);
+        void DeleteSubmission(const Resources::SubmissionHandle& handle);
 
         template <RendererAttribute A>
         const RendererAttributeType<A>::Type& Get() const;
@@ -88,20 +126,9 @@ namespace Systems
         RendererClearColour mClearColour;
         RendererVSyncMode mVSyncMode;
 
-        Types::SparseSet<Resources::BufferDescriptor> mBufferData;
-        Types::SparseSet<Resources::RasterPipelineDescriptor> mRasterPipelineData;
-        Types::SparseSet<Resources::SubmissionDescriptor> mSubmissionData;
-
-        std::vector<std::size_t> mBufferGenerations;
-        std::vector<std::size_t> mPipelineGenerations;
-        std::vector<std::size_t> mSubmissionGenerations;
-
-        std::vector<std::size_t> mBufferFreeList;
-        std::vector<std::size_t> mPipelineFreeList;
-        std::vector<std::size_t> mSubmissionFreeList;
-
-        std::size_t mCommandBufferCount = 0;
-        std::vector<std::size_t> mCommandBufferFreeList;
+        ResourceRegistry<Resources::SubmissionData> mSubmissions;
+        ResourceRegistry<Resources::RasterPipelineData> mRasterPipelines;
+        ResourceRegistry<Resources::BufferData> mBuffers;
 
         bool mClearColourDirty = false;
         bool mVSyncModeDirty = false;
