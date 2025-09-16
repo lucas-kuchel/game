@@ -1,9 +1,7 @@
 #pragma once
 
-#include <Renderer/Systems/Device.hpp>
-#include <Renderer/Systems/Instance.hpp>
-#include <Renderer/Systems/Swapchain.hpp>
-
+#include <Systems/Registry.hpp>
+#include <Systems/Renderer.hpp>
 #include <Systems/Window.hpp>
 
 namespace Program
@@ -22,6 +20,10 @@ namespace Program
         Systems::Context mContext;
         Systems::Window mWindow;
 
-        Renderer::Systems::Instance mInstance;
+        Systems::Renderer mRenderer;
+
+        Systems::ContextDescriptor CreateContext();
+        Systems::WindowDescriptor CreateWindow();
+        Systems::RendererDescriptor CreateRenderer();
     };
 }

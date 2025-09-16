@@ -18,8 +18,8 @@ namespace Systems
 {
     struct InputState
     {
-        std::array<PressableState, 91> Keys = {PressableState::NONE};
-        std::array<PressableState, 5> Buttons = {PressableState::RELEASED};
+        std::array<PressableState, 91> Keys = {PressableState::None};
+        std::array<PressableState, 5> Buttons = {PressableState::Released};
 
         std::array<bool, 91> KeysDown = {false};
         std::array<bool, 5> ButtonsDown = {false};
@@ -186,219 +186,227 @@ namespace Systems
             }
             case GLFW_KEY_SPACE:
             {
-                return Key::SPACE;
+                return Key::Space;
             }
             case GLFW_KEY_LEFT_CONTROL:
             {
-                return Key::LCTRL;
+                return Key::LeftControl;
             }
             case GLFW_KEY_RIGHT_CONTROL:
             {
-                return Key::RCTRL;
+                return Key::RightControl;
             }
             case GLFW_KEY_LEFT_SUPER:
             {
-                return Key::LSUPER;
+                return Key::LeftSuper;
             }
             case GLFW_KEY_RIGHT_SUPER:
             {
-                return Key::RSUPER;
+                return Key::RightSuper;
             }
             case GLFW_KEY_LEFT_ALT:
             {
-                return Key::LALT;
+                return Key::LeftAlt;
             }
             case GLFW_KEY_RIGHT_ALT:
             {
-                return Key::RALT;
+                return Key::RightAlt;
             }
             case GLFW_KEY_CAPS_LOCK:
             {
-                return Key::CAPSLOCK;
+                return Key::Capslock;
             }
             case GLFW_KEY_TAB:
             {
-                return Key::TAB;
+                return Key::Tab;
             }
             case GLFW_KEY_ESCAPE:
             {
-                return Key::ESC;
+                return Key::Escape;
             }
             case GLFW_KEY_LEFT_SHIFT:
             {
-                return Key::LSHIFT;
+                return Key::LeftShift;
             }
             case GLFW_KEY_RIGHT_SHIFT:
             {
-                return Key::RSHIFT;
+                return Key::RightShift;
             }
             case GLFW_KEY_HOME:
             {
-                return Key::HOME;
+                return Key::Home;
             }
             case GLFW_KEY_END:
             {
-                return Key::END;
+                return Key::End;
             }
             case GLFW_KEY_PAGE_UP:
             {
-                return Key::PGUP;
+                return Key::PageUp;
             }
             case GLFW_KEY_PAGE_DOWN:
             {
-                return Key::PGDN;
+                return Key::PageDown;
             }
             case GLFW_KEY_INSERT:
             {
-                return Key::INSERT;
+                return Key::Insert;
             }
             case GLFW_KEY_DELETE:
             {
-                return Key::DEL;
+                return Key::Delete;
             }
             case GLFW_KEY_ENTER:
             {
-                return Key::ENTER;
+                return Key::Enter;
             }
             case GLFW_KEY_BACKSPACE:
             {
-                return Key::BACKSPACE;
+                return Key::Backspace;
             }
             case GLFW_KEY_GRAVE_ACCENT:
             {
-                return Key::TILDE;
+                return Key::Tilde;
             }
             case GLFW_KEY_EQUAL:
             {
-                return Key::PLUS;
+                return Key::Equal;
             }
             case GLFW_KEY_MINUS:
             {
-                return Key::MINUS;
+                return Key::Minus;
             }
             case GLFW_KEY_SLASH:
             {
-                return Key::FSLASH;
+                return Key::Forwardslash;
             }
             case GLFW_KEY_BACKSLASH:
             {
-                return Key::BSLASH;
+                return Key::Backslash;
             }
             case GLFW_KEY_SEMICOLON:
             {
-                return Key::SEMICOLON;
+                return Key::Semicolon;
             }
             case GLFW_KEY_APOSTROPHE:
             {
-                return Key::QUOTE;
+                return Key::Apostrophe;
             }
             case GLFW_KEY_COMMA:
             {
-                return Key::COMMA;
+                return Key::Comma;
             }
             case GLFW_KEY_PERIOD:
             {
-                return Key::PERIOD;
+                return Key::Period;
             }
             case GLFW_KEY_0:
             {
-                return Key::ROW_0;
+                return Key::Row0;
             }
             case GLFW_KEY_1:
             {
-                return Key::ROW_1;
+                return Key::Row1;
             }
             case GLFW_KEY_2:
             {
-                return Key::ROW_2;
+                return Key::Row2;
             }
             case GLFW_KEY_3:
             {
-                return Key::ROW_3;
+                return Key::Row3;
             }
             case GLFW_KEY_4:
             {
-                return Key::ROW_4;
+                return Key::Row4;
             }
             case GLFW_KEY_5:
             {
-                return Key::ROW_5;
+                return Key::Row5;
             }
             case GLFW_KEY_6:
             {
-                return Key::ROW_6;
+                return Key::Row6;
             }
             case GLFW_KEY_7:
             {
-                return Key::ROW_7;
+                return Key::Row7;
             }
             case GLFW_KEY_8:
             {
-                return Key::ROW_8;
+                return Key::Row8;
             }
             case GLFW_KEY_9:
             {
-                return Key::ROW_9;
+                return Key::Row9;
+            }
+            case GLFW_KEY_KP_ADD:
+            {
+                return Key::NumpadPlus;
+            }
+            case GLFW_KEY_KP_SUBTRACT:
+            {
+                return Key::NumpadMinus;
             }
             case GLFW_KEY_KP_0:
             {
-                return Key::PAD_0;
+                return Key::Numpad0;
             }
             case GLFW_KEY_KP_1:
             {
-                return Key::PAD_1;
+                return Key::Numpad1;
             }
             case GLFW_KEY_KP_2:
             {
-                return Key::PAD_2;
+                return Key::Numpad2;
             }
             case GLFW_KEY_KP_3:
             {
-                return Key::PAD_3;
+                return Key::Numpad3;
             }
             case GLFW_KEY_KP_4:
             {
-                return Key::PAD_4;
+                return Key::Numpad4;
             }
             case GLFW_KEY_KP_5:
             {
-                return Key::PAD_5;
+                return Key::Numpad5;
             }
             case GLFW_KEY_KP_6:
             {
-                return Key::PAD_6;
+                return Key::Numpad6;
             }
             case GLFW_KEY_KP_7:
             {
-                return Key::PAD_7;
+                return Key::Numpad7;
             }
             case GLFW_KEY_KP_8:
             {
-                return Key::PAD_8;
+                return Key::Numpad8;
             }
             case GLFW_KEY_KP_9:
             {
-                return Key::PAD_9;
+                return Key::Numpad9;
             }
             case GLFW_KEY_UP:
             {
-                return Key::UP;
+                return Key::UpArrow;
             }
             case GLFW_KEY_DOWN:
             {
-                return Key::DOWN;
+                return Key::DownArrow;
             }
             case GLFW_KEY_LEFT:
             {
-                return Key::LEFT;
+                return Key::LeftArrow;
             }
             case GLFW_KEY_RIGHT:
             {
-                return Key::RIGHT;
+                return Key::RightArrow;
             }
         }
 
-        throw Debug::Exception(Debug::ErrorCode::CONFLICT, "[UNREACHABLE]");
+        throw;
     }
 
     MouseButton MapButton(int glfwButton)
@@ -406,17 +414,28 @@ namespace Systems
         switch (glfwButton)
         {
             case GLFW_MOUSE_BUTTON_LEFT:
-                return MouseButton::LEFT;
+            {
+                return MouseButton::Left;
+            }
             case GLFW_MOUSE_BUTTON_RIGHT:
-                return MouseButton::RIGHT;
+            {
+                return MouseButton::Right;
+            }
             case GLFW_MOUSE_BUTTON_MIDDLE:
-                return MouseButton::MIDDLE;
+            {
+                return MouseButton::Middle;
+            }
             case GLFW_MOUSE_BUTTON_4:
-                return MouseButton::FORWARD;
+            {
+                return MouseButton::Forward;
+            }
             case GLFW_MOUSE_BUTTON_5:
-                return MouseButton::BACK;
+            {
+                return MouseButton::Back;
+            }
         }
-        throw Debug::Exception(Debug::ErrorCode::CONFLICT, "[UNREACHABLE]");
+
+        throw;
     }
 
     void KeyCallback(GLFWwindow* window, int key, int, int action, int)
@@ -613,24 +632,24 @@ namespace Systems
 
             if (down)
             {
-                if (previous == PressableState::NONE || previous == PressableState::RELEASED)
+                if (previous == PressableState::None || previous == PressableState::Released)
                 {
-                    state->Keys[i] = PressableState::PRESSED;
+                    state->Keys[i] = PressableState::Pressed;
                 }
                 else
                 {
-                    state->Keys[i] = PressableState::HELD;
+                    state->Keys[i] = PressableState::Held;
                 }
             }
             else
             {
-                if (previous == PressableState::PRESSED || previous == PressableState::HELD)
+                if (previous == PressableState::Pressed || previous == PressableState::Held)
                 {
-                    state->Keys[i] = PressableState::RELEASED;
+                    state->Keys[i] = PressableState::Released;
                 }
                 else
                 {
-                    state->Keys[i] = PressableState::NONE;
+                    state->Keys[i] = PressableState::None;
                 }
             }
         }
@@ -642,24 +661,24 @@ namespace Systems
 
             if (down)
             {
-                if (previous == PressableState::NONE || previous == PressableState::RELEASED)
+                if (previous == PressableState::None || previous == PressableState::Released)
                 {
-                    state->Buttons[i] = PressableState::PRESSED;
+                    state->Buttons[i] = PressableState::Pressed;
                 }
                 else
                 {
-                    state->Buttons[i] = PressableState::HELD;
+                    state->Buttons[i] = PressableState::Held;
                 }
             }
             else
             {
-                if (previous == PressableState::PRESSED || previous == PressableState::HELD)
+                if (previous == PressableState::Pressed || previous == PressableState::Held)
                 {
-                    state->Buttons[i] = PressableState::RELEASED;
+                    state->Buttons[i] = PressableState::Released;
                 }
                 else
                 {
-                    state->Buttons[i] = PressableState::NONE;
+                    state->Buttons[i] = PressableState::None;
                 }
             }
         }
@@ -849,15 +868,15 @@ namespace Systems
     {
         mState->Cursor = state;
 
-        if (state.Mode == CursorMode::DISABLED)
+        if (state.Mode == CursorMode::Disabled)
         {
             glfwSetInputMode(static_cast<GLFWwindow*>(mHandle), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
-        else if (state.Mode == CursorMode::HIDDEN)
+        else if (state.Mode == CursorMode::Hidden)
         {
             glfwSetInputMode(static_cast<GLFWwindow*>(mHandle), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         }
-        else if (state.Mode == CursorMode::NORMAL)
+        else if (state.Mode == CursorMode::Normal)
         {
             glfwSetInputMode(static_cast<GLFWwindow*>(mHandle), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }

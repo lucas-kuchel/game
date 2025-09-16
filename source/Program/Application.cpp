@@ -8,7 +8,7 @@
 namespace Program
 {
     Application::Application()
-        : mContext(CreateContext()), mWindow(CreateWindow()), mRenderer(CreateRenderer()), mInstance(mContext, mRenderer, mWindow)
+        : mContext(CreateContext()), mWindow(CreateWindow()), mRenderer(CreateRenderer())
     {
     }
 
@@ -21,7 +21,6 @@ namespace Program
         mContext.Update();
         mWindow.Update();
         mRenderer.BeginFrame();
-        mInstance.Update();
         mRenderer.EndFrame();
     }
 
@@ -33,7 +32,7 @@ namespace Program
     Systems::ContextDescriptor Application::CreateContext()
     {
         return {
-            .Renderer = Systems::RendererBackend::METAL,
+            .Renderer = Systems::RendererBackend::OPENGL,
         };
     }
 
