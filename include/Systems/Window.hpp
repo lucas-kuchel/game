@@ -4,6 +4,7 @@
 #include <Systems/Context.hpp>
 
 #include <functional>
+#include <queue>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -18,17 +19,28 @@ using VkSurfaceKHR = VkSurfaceKHR_T*;
 
 struct VkAllocationCallbacks;
 
+struct GLFWwindow;
+
 namespace Systems
 {
     using WindowSize = glm::uvec2;
     using WindowTitle = std::string;
     using WindowContext = Context;
 
+    enum class WindowVisibility
+    {
+        Fullscreen,
+        Windowed,
+        Iconified,
+    };
+
     enum class WindowAttribute
     {
         Title,
         Size,
         Status,
+        Visibility,
+
     };
 
     enum class WindowStatus
@@ -154,12 +166,10 @@ namespace Systems
         Back,
     };
 
-    enum class PressableState
+    enum class PressableStatus
     {
         Pressed,
         Released,
-        Held,
-        None,
     };
 
     enum class CursorMode
@@ -169,16 +179,91 @@ namespace Systems
         Disabled,
     };
 
-    struct ScrollState
+    enum class WindowEventType
+    {
+        Key,
+        Scancode,
+        Char,
+        MouseButton,
+        MouseMove,
+        Scroll,
+        WindowResize,
+        WindowFocus,
+        WindowVisibility,
+        WindowClose
+    };
+
+    struct KeyEvent
+    {
+        Key Key;
+        PressableStatus State;
+    };
+
+    struct ScancodeEvent
+    {
+        std::int32_t Scancode;
+        PressableStatus State;
+    };
+
+    struct CharEvent
+    {
+        char32_t Codepoint;
+    };
+
+    struct MouseButtonEvent
+    {
+        MouseButton Button;
+        PressableStatus State;
+    };
+
+    struct MouseMoveEvent
+    {
+        glm::dvec2 Position;
+    };
+
+    struct MouseScrollEvent
     {
         glm::dvec2 Offsets;
     };
 
-    struct CursorState
+    struct WindowResizeEvent
     {
-        glm::dvec2 Position;
+        glm::uvec2 Size;
+    };
 
-        CursorMode Mode;
+    struct WindowFocusEvent
+    {
+        bool Focused;
+    };
+
+    struct WindowCloseEvent
+    {
+    };
+
+    struct WindowVisibilityEvent
+    {
+        WindowVisibility Visibility;
+    };
+
+    struct WindowEvent
+    {
+        WindowEventType Type;
+
+        union
+        {
+            KeyEvent KeyInput;
+            ScancodeEvent ScancodeInput;
+            CharEvent CharInput;
+
+            MouseButtonEvent MouseButtonInput;
+            MouseMoveEvent MousePositionInput;
+            MouseScrollEvent MouseScrollInput;
+
+            WindowResizeEvent ResizeInteraction;
+            WindowFocusEvent FocusInteraction;
+            WindowVisibilityEvent VisibilityInteraction;
+            WindowCloseEvent CloseInteraction;
+        };
     };
 
     template <WindowInteractive>
@@ -187,83 +272,46 @@ namespace Systems
     template <>
     class WindowInteractionLayer<WindowInteractive::OpenGL>
     {
+    public:
+        void MakeContextCurrent();
+        void SwapBuffers();
+        void SetSwapInterval(int interval);
+
     private:
         friend class Window;
 
         explicit WindowInteractionLayer(void* handle);
 
         void* mHandle;
-
-    public:
-        void MakeContextCurrent();
-        void SwapBuffers();
-        void SetSwapInterval(int interval);
     };
 
     template <>
     class WindowInteractionLayer<WindowInteractive::Vulkan>
     {
+    public:
+        std::vector<std::string_view> GetRequiredInstanceExtensions();
+        VkSurfaceKHR CreateWindowSurface(VkInstance instance, const VkAllocationCallbacks* allocator = nullptr);
+
     private:
         friend class Window;
 
         explicit WindowInteractionLayer(void* handle);
 
         void* mHandle;
-
-    public:
-        std::vector<std::string_view> GetRequiredInstanceExtensions();
-        VkSurfaceKHR CreateWindowSurface(VkInstance instance, const VkAllocationCallbacks* allocator = nullptr);
     };
 
     template <>
     class WindowInteractionLayer<WindowInteractive::CocoaBackend>
     {
-    private:
-        friend class Window;
-
-        explicit WindowInteractionLayer(void* handle);
-
-        void* mHandle;
-
     public:
         void* GetCocoaWindow();
-    };
 
-    struct InputState;
-
-    template <>
-    class WindowInteractionLayer<WindowInteractive::KeyboardInputs>
-    {
     private:
         friend class Window;
 
         explicit WindowInteractionLayer(void* handle);
 
         void* mHandle;
-        InputState* mState;
-
-    public:
-        PressableState GetKeyState(Key key) const;
-    };
-
-    template <>
-    class WindowInteractionLayer<WindowInteractive::MouseInputs>
-    {
-    private:
-        friend class Window;
-
-        explicit WindowInteractionLayer(void* handle);
-
-        void* mHandle;
-        InputState* mState;
-
-    public:
-        PressableState GetButtonState(MouseButton button) const;
-
-        ScrollState GetScrollState() const;
-        CursorState GetCursorState() const;
-
-        void SetCursorState(const CursorState& state);
     };
 
     template <WindowAttribute A>
@@ -301,7 +349,7 @@ namespace Systems
         Window(const WindowDescriptor& descriptor);
         ~Window();
 
-        void ManageEvents();
+        std::queue<WindowEvent>& QueryEvents();
 
         template <WindowAttribute A>
         const WindowAttributeType<A>::Type& Get() const;
@@ -318,9 +366,8 @@ namespace Systems
         }
 
     private:
-        void GL_Init();
-        void VK_Init();
-        void MTL_Init();
+        void InitialiseHintsOpenGL();
+        void InitialiseHintsDefault();
 
         template <WindowInteractive I>
         void ValidateInteractionLayerRequest() const
@@ -330,42 +377,31 @@ namespace Systems
             switch (I)
             {
                 case WindowInteractive::OpenGL:
-                {
                     if (renderer != RendererBackend::OpenGL)
                     {
                         throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::OPENGL> Systems::Window::CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }
-
                     break;
-                }
                 case WindowInteractive::Vulkan:
-                {
                     if (renderer != RendererBackend::Vulkan)
                     {
                         throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::VULKAN>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }
-
                     break;
-                }
                 case WindowInteractive::CocoaBackend:
-                {
                     if (renderer != RendererBackend::Metal)
                     {
                         throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::COCOA_LAYER>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }
-
                     break;
-                }
                 default:
-                {
                     break;
-                }
             }
         }
 
@@ -379,6 +415,20 @@ namespace Systems
         bool mSizeDirty = false;
         bool mStatusDirty = false;
 
-        void* mHandle = nullptr;
+        GLFWwindow* mHandle = nullptr;
+
+        std::queue<WindowEvent> mEventQueue;
+
+        template <WindowInteractive>
+        friend class WindowInteractionLayer;
+
+        static void SizeCallback(GLFWwindow* window, int width, int height);
+        static void CloseCallback(GLFWwindow* window);
+        static void FocusCallback(GLFWwindow* window, int focused);
+        static void IconifyCallback(GLFWwindow* window, int iconified);
+        static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+        static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+        static void MousePositionCallback(GLFWwindow* window, double x, double y);
+        static void MouseScrollCallback(GLFWwindow* window, double x, double y);
     };
 }
