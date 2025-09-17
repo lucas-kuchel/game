@@ -32,7 +32,7 @@ namespace Systems
     class RendererBackendImplementation<RendererBackend::Metal>
     {
     public:
-        RendererBackendImplementation(const RendererBackendDescriptor& descriptor);
+        RendererBackendImplementation(RendererBackendDescriptor& descriptor);
         ~RendererBackendImplementation();
 
         void Clear();

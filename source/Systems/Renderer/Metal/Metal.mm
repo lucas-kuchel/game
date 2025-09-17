@@ -1,5 +1,6 @@
 #if defined(PLATFORM_APPLE)
 #include <Systems/Renderer.hpp>
+#include <Systems/Renderer/Metal.hpp>
 
 #include <Debug/Logging.hpp>
 
@@ -17,8 +18,6 @@ namespace Systems
     struct MetalBufferData
     {
         id<MTLBuffer> Handle = nil;
-
-        Resources::BufferDescriptor Descriptor;
     };
 
     struct MetalShaderInfo
@@ -34,8 +33,6 @@ namespace Systems
 
         std::vector<MetalShaderInfo> ShaderInfo;
 
-        Resources::RasterPipelineDescriptor Descriptor;
-
         std::vector<NSUInteger> VertexBufferBindings;
 
         MTLTriangleFillMode FillMode;
@@ -48,8 +45,6 @@ namespace Systems
 
     struct MetalSubmissionData
     {
-        Resources::SubmissionDescriptor Descriptor;
-
         std::size_t IndexCount;
         MTLIndexType IndexType;
     };
@@ -60,20 +55,9 @@ namespace Systems
         NSUInteger Size;
     };
 
-    class RendererBackendImplementationSpecifics
+    struct RendererBackendImplementation<RendererBackend::Metal>::Internals
     {
     public:
-        RendererBackendImplementationSpecifics(RendererWindow& window)
-            : Window(window)
-        {
-        }
-
-        RendererWindow& Window;
-
-        Types::SparseSet<MetalBufferData> Buffers;
-        Types::SparseSet<MetalPipelineData> Pipelines;
-        Types::SparseSet<MetalSubmissionData> Submissions;
-
         id<MTLDevice> Device = nil;
         id<MTLCommandQueue> CommandQueue = nil;
         id<MTLCommandBuffer> RasterCommandBuffer = nil;
@@ -87,204 +71,124 @@ namespace Systems
 
         glm::fvec4 ClearColour;
 
-        static MetalAttributeTypeInfo GetTypeInfo(Resources::BufferAttributeType type)
+        static MetalAttributeTypeInfo GetTypeInfo(Resources::BufferAttribute attribute)
         {
-            using T = Resources::BufferAttributeType;
-
-            switch (type)
+            switch (attribute)
             {
-                case T::R32_FLOAT:
-                {
+                case Resources::BufferAttribute::F32_R:
                     return {MTLVertexFormatFloat, sizeof(float)};
-                }
-                case T::R32G32_FLOAT:
-                {
+                case Resources::BufferAttribute::F32_RG:
                     return {MTLVertexFormatFloat2, sizeof(float) * 2};
-                }
-                case T::R32G32B32_FLOAT:
-                {
+                case Resources::BufferAttribute::F32_RGB:
                     return {MTLVertexFormatFloat3, sizeof(float) * 3};
-                }
-                case T::R32G32B32A32_FLOAT:
-                {
+                case Resources::BufferAttribute::F32_RGBA:
                     return {MTLVertexFormatFloat4, sizeof(float) * 4};
-                }
-                case T::R8_INT:
-                {
+
+                case Resources::BufferAttribute::I8_R:
                     return {MTLVertexFormatChar, sizeof(std::int8_t)};
-                }
-                case T::R8G8_INT:
-                {
+                case Resources::BufferAttribute::I8_RG:
                     return {MTLVertexFormatChar2, sizeof(std::int8_t) * 2};
-                }
-                case T::R8G8B8_INT:
-                {
+                case Resources::BufferAttribute::I8_RGB:
                     return {MTLVertexFormatChar3, sizeof(std::int8_t) * 3};
-                }
-                case T::R8G8B8A8_INT:
-                {
+                case Resources::BufferAttribute::I8_RGBA:
                     return {MTLVertexFormatChar4, sizeof(std::int8_t) * 4};
-                }
-                case T::R16_INT:
-                {
+
+                case Resources::BufferAttribute::I16_R:
                     return {MTLVertexFormatShort, sizeof(std::int16_t)};
-                }
-                case T::R16G16_INT:
-                {
+                case Resources::BufferAttribute::I16_RG:
                     return {MTLVertexFormatShort2, sizeof(std::int16_t) * 2};
-                }
-                case T::R16G16B16_INT:
-                {
+                case Resources::BufferAttribute::I16_RGB:
                     return {MTLVertexFormatShort3, sizeof(std::int16_t) * 3};
-                }
-                case T::R16G16B16A16_INT:
-                {
+                case Resources::BufferAttribute::I16_RGBA:
                     return {MTLVertexFormatShort4, sizeof(std::int16_t) * 4};
-                }
-                case T::R32_INT:
-                {
+
+                case Resources::BufferAttribute::I32_R:
                     return {MTLVertexFormatInt, sizeof(std::int32_t)};
-                }
-                case T::R32G32_INT:
-                {
+                case Resources::BufferAttribute::I32_RG:
                     return {MTLVertexFormatInt2, sizeof(std::int32_t) * 2};
-                }
-                case T::R32G32B32_INT:
-                {
+                case Resources::BufferAttribute::I32_RGB:
                     return {MTLVertexFormatInt3, sizeof(std::int32_t) * 3};
-                }
-                case T::R32G32B32A32_INT:
-                {
+                case Resources::BufferAttribute::I32_RGBA:
                     return {MTLVertexFormatInt4, sizeof(std::int32_t) * 4};
-                }
-                case T::R8_UINT:
-                {
+
+                case Resources::BufferAttribute::U8_R:
                     return {MTLVertexFormatUChar, sizeof(std::uint8_t)};
-                }
-                case T::R8G8_UINT:
-                {
+                case Resources::BufferAttribute::U8_RG:
                     return {MTLVertexFormatUChar2, sizeof(std::uint8_t) * 2};
-                }
-                case T::R8G8B8_UINT:
-                {
+                case Resources::BufferAttribute::U8_RGB:
                     return {MTLVertexFormatUChar3, sizeof(std::uint8_t) * 3};
-                }
-                case T::R8G8B8A8_UINT:
-                {
+                case Resources::BufferAttribute::U8_RGBA:
                     return {MTLVertexFormatUChar4, sizeof(std::uint8_t) * 4};
-                }
-                case T::R16_UINT:
-                {
+
+                case Resources::BufferAttribute::U16_R:
                     return {MTLVertexFormatUShort, sizeof(std::uint16_t)};
-                }
-                case T::R16G16_UINT:
-                {
+                case Resources::BufferAttribute::U16_RG:
                     return {MTLVertexFormatUShort2, sizeof(std::uint16_t) * 2};
-                }
-                case T::R16G16B16_UINT:
-                {
+                case Resources::BufferAttribute::U16_RGB:
                     return {MTLVertexFormatUShort3, sizeof(std::uint16_t) * 3};
-                }
-                case T::R16G16B16A16_UINT:
-                {
+                case Resources::BufferAttribute::U16_RGBA:
                     return {MTLVertexFormatUShort4, sizeof(std::uint16_t) * 4};
-                }
-                case T::R32_UINT:
-                {
+
+                case Resources::BufferAttribute::U32_R:
                     return {MTLVertexFormatUInt, sizeof(std::uint32_t)};
-                }
-                case T::R32G32_UINT:
-                {
+                case Resources::BufferAttribute::U32_RG:
                     return {MTLVertexFormatUInt2, sizeof(std::uint32_t) * 2};
-                }
-                case T::R32G32B32_UINT:
-                {
+                case Resources::BufferAttribute::U32_RGB:
                     return {MTLVertexFormatUInt3, sizeof(std::uint32_t) * 3};
-                }
-                case T::R32G32B32A32_UINT:
-                {
+                case Resources::BufferAttribute::U32_RGBA:
                     return {MTLVertexFormatUInt4, sizeof(std::uint32_t) * 4};
-                }
-                case T::R8_SNORM:
-                {
+
+                case Resources::BufferAttribute::SN8_R:
                     return {MTLVertexFormatCharNormalized, sizeof(std::int8_t)};
-                }
-                case T::R8G8_SNORM:
-                {
+                case Resources::BufferAttribute::SN8_RG:
                     return {MTLVertexFormatChar2Normalized, sizeof(std::int8_t) * 2};
-                }
-                case T::R8G8B8_SNORM:
-                {
+                case Resources::BufferAttribute::SN8_RGB:
                     return {MTLVertexFormatChar3Normalized, sizeof(std::int8_t) * 3};
-                }
-                case T::R8G8B8A8_SNORM:
-                {
+                case Resources::BufferAttribute::SN8_RGBA:
                     return {MTLVertexFormatChar4Normalized, sizeof(std::int8_t) * 4};
-                }
-                case T::R16_SNORM:
-                {
+
+                case Resources::BufferAttribute::SN16_R:
                     return {MTLVertexFormatShortNormalized, sizeof(std::int16_t)};
-                }
-                case T::R16G16_SNORM:
-                {
+                case Resources::BufferAttribute::SN16_RG:
                     return {MTLVertexFormatShort2Normalized, sizeof(std::int16_t) * 2};
-                }
-                case T::R16G16B16_SNORM:
-                {
+                case Resources::BufferAttribute::SN16_RGB:
                     return {MTLVertexFormatShort3Normalized, sizeof(std::int16_t) * 3};
-                }
-                case T::R16G16B16A16_SNORM:
-                {
+                case Resources::BufferAttribute::SN16_RGBA:
                     return {MTLVertexFormatShort4Normalized, sizeof(std::int16_t) * 4};
-                }
-                case T::R8_UNORM:
-                {
+
+                case Resources::BufferAttribute::UN8_R:
                     return {MTLVertexFormatUCharNormalized, sizeof(std::uint8_t)};
-                }
-                case T::R8G8_UNORM:
-                {
+                case Resources::BufferAttribute::UN8_RG:
                     return {MTLVertexFormatUChar2Normalized, sizeof(std::uint8_t) * 2};
-                }
-                case T::R8G8B8_UNORM:
-                {
+                case Resources::BufferAttribute::UN8_RGB:
                     return {MTLVertexFormatUChar3Normalized, sizeof(std::uint8_t) * 3};
-                }
-                case T::R8G8B8A8_UNORM:
-                {
+                case Resources::BufferAttribute::UN8_RGBA:
                     return {MTLVertexFormatUChar4Normalized, sizeof(std::uint8_t) * 4};
-                }
-                case T::R16_UNORM:
-                {
+
+                case Resources::BufferAttribute::UN16_R:
                     return {MTLVertexFormatUShortNormalized, sizeof(std::uint16_t)};
-                }
-                case T::R16G16_UNORM:
-                {
+                case Resources::BufferAttribute::UN16_RG:
                     return {MTLVertexFormatUShort2Normalized, sizeof(std::uint16_t) * 2};
-                }
-                case T::R16G16B16_UNORM:
-                {
+                case Resources::BufferAttribute::UN16_RGB:
                     return {MTLVertexFormatUShort3Normalized, sizeof(std::uint16_t) * 3};
-                }
-                case T::R16G16B16A16_UNORM:
-                {
+                case Resources::BufferAttribute::UN16_RGBA:
                     return {MTLVertexFormatUShort4Normalized, sizeof(std::uint16_t) * 4};
-                }
+
                 default:
-                {
                     return {MTLVertexFormatInvalid, 0};
-                }
             }
         }
 
-        MTLVertexDescriptor* BuildVertexDescriptor(const MetalPipelineData& data)
+        static MTLVertexDescriptor* BuildVertexDescriptor(const Resources::RasterPipelineData& data)
         {
             MTLVertexDescriptor* vertexDescriptor = [[MTLVertexDescriptor alloc] init];
-            auto& descriptor = data.Descriptor;
+
+            auto& info = *static_cast<MetalPipelineData*>(data.BackendMetadata);
 
             NSUInteger attributeIndex = 0;
             NSUInteger bufferIndex = 0;
 
-            for (const auto& buf : descriptor.VertexBufferFormats)
+            for (const auto& buf : data.VertexBufferFormats)
             {
                 NSUInteger offset = 0;
 
@@ -299,16 +203,16 @@ namespace Systems
 
                     vertexDescriptor.attributes[attributeIndex].format = typeInfo.Format;
                     vertexDescriptor.attributes[attributeIndex].offset = offset;
-                    vertexDescriptor.attributes[attributeIndex].bufferIndex = data.VertexBufferBindings[bufferIndex];
+                    vertexDescriptor.attributes[attributeIndex].bufferIndex = info.VertexBufferBindings[bufferIndex];
 
                     offset += typeInfo.Size;
 
                     attributeIndex++;
                 }
 
-                vertexDescriptor.layouts[data.VertexBufferBindings[bufferIndex]].stride = offset;
-                vertexDescriptor.layouts[data.VertexBufferBindings[bufferIndex]].stepFunction = MTLVertexStepFunctionPerVertex;
-                vertexDescriptor.layouts[data.VertexBufferBindings[bufferIndex]].stepRate = 1;
+                vertexDescriptor.layouts[info.VertexBufferBindings[bufferIndex]].stride = offset;
+                vertexDescriptor.layouts[info.VertexBufferBindings[bufferIndex]].stepFunction = MTLVertexStepFunctionPerVertex;
+                vertexDescriptor.layouts[info.VertexBufferBindings[bufferIndex]].stepRate = 1;
 
                 bufferIndex++;
             }
@@ -316,612 +220,503 @@ namespace Systems
             return vertexDescriptor;
         }
 
-        std::vector<std::string> ConvertShaderBinaries(MetalPipelineData& pipelineData)
+        static std::pair<std::string, MetalShaderInfo> ConvertShaderBinary(Resources::RasterPipelineData& pipelineData, Resources::ShaderDescriptor& shaderDescriptor, std::size_t stageIndex)
         {
-            auto& descriptor = pipelineData.Descriptor;
+            std::ifstream spirvFile(shaderDescriptor.Path, std::ios::binary | std::ios::ate);
 
-            for (std::size_t i = 0; i < descriptor.Shaders.size(); i++)
+            if (!spirvFile)
             {
-                for (std::size_t j = i + 1; j < descriptor.Shaders.size(); j++)
-                {
-                    auto& one = descriptor.Shaders[i];
-                    auto& two = descriptor.Shaders[j];
+                throw Debug::Exception(Debug::ErrorCode::FILE_NOT_FOUND, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                         "SPIR-V shader loading error\n"
+                                                                         "provided SPIR-V binary file does not exist or permissions do not allow reading (path = {})",
+                                       shaderDescriptor.Path);
+            }
 
-                    if (one.Path == two.Path)
-                    {
-                        throw Debug::Exception(Debug::ErrorCode::FILE_NOT_FOUND, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                                 "SPIR-V shader loading error\n"
-                                                                                 "SPIR-V does not allow for multiple shader stages in a single binary\n"
-                                                                                 "all shader paths must be unique (path = {})",
-                                               one.Path);
-                    }
+            std::size_t size = spirvFile.tellg();
+
+            spirvFile.seekg(0);
+
+            if (size % 4 != 0)
+            {
+                throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                        "SPIR-V shader loading error\n"
+                                                                        "error while reading SPIR-V binary file (path = {})",
+                                       shaderDescriptor.Path);
+            }
+
+            std::vector<std::uint32_t> spirv(size / sizeof(std::uint32_t));
+
+            if (!spirvFile.read(reinterpret_cast<char*>(spirv.data()), size))
+            {
+                throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                        "SPIR-V shader loading error\n"
+                                                                        "error while reading SPIR-V binary file (path = {})",
+                                       shaderDescriptor.Path);
+            }
+
+            if (spirvFile.gcount() != static_cast<std::streamsize>(size))
+            {
+                throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                        "SPIR-V shader loading error\n"
+                                                                        "error while reading SPIR-V binary file (path = {})",
+                                       shaderDescriptor.Path);
+            }
+
+            spirv_cross::CompilerMSL msl(std::move(spirv));
+            spirv_cross::CompilerMSL::Options options;
+
+            msl.set_msl_options(options);
+
+            auto entryPoints = msl.get_entry_points_and_stages();
+
+            bool found = false;
+
+            for (auto& entryPoint : entryPoints)
+            {
+                if (entryPoint.name == shaderDescriptor.Function)
+                {
+                    found = true;
+
+                    break;
                 }
             }
 
-            std::vector<std::string> sources;
-
-            sources.reserve(descriptor.Shaders.size());
-            pipelineData.ShaderInfo.reserve(descriptor.Shaders.size());
-
-            for (const auto& shaderDescriptor : descriptor.Shaders)
+            if (!found)
             {
-                std::filesystem::path spirvPath = shaderDescriptor.Path;
-
-                std::ifstream spirvFile(spirvPath, std::ios::binary | std::ios::ate);
-
-                if (!spirvFile)
-                {
-                    throw Debug::Exception(Debug::ErrorCode::FILE_NOT_FOUND, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                             "SPIR-V shader loading error\n"
-                                                                             "provided SPIR-V binary file does not exist or permissions do not allow reading (path = {})",
-                                           shaderDescriptor.Path);
-                }
-
-                std::size_t size = spirvFile.tellg();
-
-                spirvFile.seekg(0);
-
-                if (size % 4 != 0)
-                {
-                    throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                            "SPIR-V shader loading error\n"
-                                                                            "error while reading SPIR-V binary file (path = {})",
-                                           shaderDescriptor.Path);
-                }
-
-                std::vector<std::uint32_t> spirv(size / sizeof(std::uint32_t));
-
-                if (!spirvFile.read(reinterpret_cast<char*>(spirv.data()), size))
-                {
-                    throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                            "SPIR-V shader loading error\n"
-                                                                            "error while reading SPIR-V binary file (path = {})",
-                                           shaderDescriptor.Path);
-                }
-
-                if (spirvFile.gcount() != static_cast<std::streamsize>(size))
-                {
-                    throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                            "SPIR-V shader loading error\n"
-                                                                            "error while reading SPIR-V binary file (path = {})",
-                                           shaderDescriptor.Path);
-                }
-
-                spirv_cross::CompilerMSL msl(std::move(spirv));
-                spirv_cross::CompilerMSL::Options options;
-
-                msl.set_msl_options(options);
-
-                auto entryPoints = msl.get_entry_points_and_stages();
-
-                bool found = false;
-
-                for (auto& entryPoint : entryPoints)
-                {
-                    if (entryPoint.name == shaderDescriptor.Function)
-                    {
-                        found = true;
-
-                        break;
-                    }
-                }
-
-                if (!found)
-                {
-                    throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                       "SPIR-V shader loading error\n"
-                                                                       "shader does not contain specified entry point (path = {})",
-                                           shaderDescriptor.Path);
-                }
-
-                switch (shaderDescriptor.Stage)
-                {
-                    case Resources::ShaderStage::VERTEX:
-                    {
-                        msl.set_entry_point(shaderDescriptor.Function, spv::ExecutionModelVertex);
-
-                        break;
-                    }
-                    case Resources::ShaderStage::PIXEL:
-                    {
-                        msl.set_entry_point(shaderDescriptor.Function, spv::ExecutionModelFragment);
-
-                        break;
-                    }
-                    case Resources::ShaderStage::GEOMETRY:
-                    {
-                        msl.set_entry_point(shaderDescriptor.Function, spv::ExecutionModelGeometry);
-
-                        break;
-                    }
-                }
-
-                spirv_cross::ShaderResources resources = msl.get_shader_resources();
-
-                if (resources.uniform_buffers.size() > shaderDescriptor.ConstantBufferFormats.size())
-                {
-                    throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                       "SPIR-V shader loading error\n"
-                                                                       "shader has incorrect constant buffer count for pipeline requirements (path = {})",
-                                           shaderDescriptor.Path);
-                }
-
-                if (resources.storage_buffers.size() > shaderDescriptor.StorageBufferFormats.size())
-                {
-                    throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                       "SPIR-V shader loading error\n"
-                                                                       "shader has incorrect storage buffer count for pipeline requirements (path = {})",
-                                           shaderDescriptor.Path);
-                }
-
-                pipelineData.ShaderInfo.emplace_back();
-
-                auto& shaderInfo = pipelineData.ShaderInfo.back();
-
-                struct ShaderBindingInfo
-                {
-                    uint32_t originalBinding;
-                    spv::StorageClass storageClass;
-                    uint32_t finalSlot;
-                    spirv_cross::Resource& original;
-                };
-
-                std::vector<ShaderBindingInfo> allBuffers;
-
-                for (auto& constantBuffer : resources.uniform_buffers)
-                {
-                    allBuffers.push_back({msl.get_decoration(constantBuffer.id, spv::DecorationBinding), spv::StorageClassUniform, 0, constantBuffer});
-                }
-
-                for (auto& storageBuffer : resources.storage_buffers)
-                {
-                    allBuffers.push_back({msl.get_decoration(storageBuffer.id, spv::DecorationBinding), spv::StorageClassStorageBuffer, 0, storageBuffer});
-                }
-
-                uint32_t nextSlot = 0;
-
-                for (auto& buffer : allBuffers)
-                {
-                    buffer.finalSlot = nextSlot++;
-
-                    msl.set_decoration(buffer.original.id, spv::DecorationBinding, buffer.finalSlot);
-                }
-
-                for (std::size_t i = 0; i < allBuffers.size(); i++)
-                {
-                    if (allBuffers[i].storageClass == spv::StorageClassUniform)
-                    {
-                        shaderInfo.ConstantBufferBindings.push_back(allBuffers[i].finalSlot);
-                    }
-                    else
-                    {
-                        shaderInfo.StorageBufferBindings.push_back(allBuffers[i].finalSlot);
-                    }
-                }
-
-                if (shaderDescriptor.Stage == Resources::ShaderStage::VERTEX)
-                {
-                    NSUInteger vertexBufferOffset = 0;
-                    if (!shaderInfo.ConstantBufferBindings.empty())
-                    {
-                        vertexBufferOffset = *std::max_element(shaderInfo.ConstantBufferBindings.begin(), shaderInfo.ConstantBufferBindings.end()) + 1;
-                    }
-                    if (!shaderInfo.StorageBufferBindings.empty())
-                    {
-                        vertexBufferOffset = std::max(vertexBufferOffset, *std::max_element(shaderInfo.StorageBufferBindings.begin(), shaderInfo.StorageBufferBindings.end()) + 1);
-                    }
-
-                    for (std::size_t i = 0; i < descriptor.VertexBufferFormats.size(); i++)
-                    {
-                        pipelineData.VertexBufferBindings.push_back(vertexBufferOffset + i);
-                    }
-                }
-
-                if (shaderDescriptor.Stage == Resources::ShaderStage::VERTEX)
-                {
-                    std::size_t attributeCount = 0;
-
-                    for (const auto& vertexinput : descriptor.VertexBufferFormats)
-                    {
-                        attributeCount += vertexinput.Attributes.size();
-                    }
-
-                    if (resources.stage_inputs.size() != attributeCount)
-                    {
-                        throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                           "SPIR-V vertex shader loading error\n"
-                                                                           "shader has incorrect vertex attribute count for pipeline requirements (path = {})",
-                                               shaderDescriptor.Path);
-                    }
-
-                    for (std::size_t i = 0; i < resources.stage_inputs.size(); i++)
-                    {
-                        auto& attribute = resources.stage_inputs[i];
-
-                        msl.set_decoration(attribute.id, spv::DecorationLocation, static_cast<std::uint32_t>(i));
-                    }
-                }
-
-                std::string source = msl.compile();
-
-                sources.push_back(source);
+                throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                   "SPIR-V shader loading error\n"
+                                                                   "shader does not contain specified entry point (path = {})",
+                                       shaderDescriptor.Path);
             }
 
-            return sources;
+            switch (stageIndex)
+            {
+                case 0:
+                    msl.set_entry_point(shaderDescriptor.Function, spv::ExecutionModelVertex);
+                    break;
+                case 1:
+                    msl.set_entry_point(shaderDescriptor.Function, spv::ExecutionModelFragment);
+                    break;
+            }
+
+            spirv_cross::ShaderResources resources = msl.get_shader_resources();
+
+            if (resources.uniform_buffers.size() > shaderDescriptor.ConstantBufferFormats.size())
+            {
+                throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                   "SPIR-V shader loading error\n"
+                                                                   "shader has incorrect constant buffer count for pipeline requirements (path = {})",
+                                       shaderDescriptor.Path);
+            }
+
+            if (resources.storage_buffers.size() > shaderDescriptor.StorageBufferFormats.size())
+            {
+                throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                   "SPIR-V shader loading error\n"
+                                                                   "shader has incorrect storage buffer count for pipeline requirements (path = {})",
+                                       shaderDescriptor.Path);
+            }
+
+            struct ShaderBindingInfo
+            {
+                uint32_t originalBinding;
+                spv::StorageClass storageClass;
+                uint32_t finalSlot;
+                spirv_cross::Resource& original;
+            };
+
+            std::vector<ShaderBindingInfo> allBuffers;
+
+            for (auto& constantBuffer : resources.uniform_buffers)
+            {
+                allBuffers.push_back({msl.get_decoration(constantBuffer.id, spv::DecorationBinding), spv::StorageClassUniform, 0, constantBuffer});
+            }
+
+            for (auto& storageBuffer : resources.storage_buffers)
+            {
+                allBuffers.push_back({msl.get_decoration(storageBuffer.id, spv::DecorationBinding), spv::StorageClassStorageBuffer, 0, storageBuffer});
+            }
+
+            uint32_t nextSlot = 0;
+
+            for (auto& buffer : allBuffers)
+            {
+                buffer.finalSlot = nextSlot++;
+
+                msl.set_decoration(buffer.original.id, spv::DecorationBinding, buffer.finalSlot);
+            }
+
+            MetalShaderInfo shaderInfo;
+
+            for (std::size_t i = 0; i < allBuffers.size(); i++)
+            {
+                if (allBuffers[i].storageClass == spv::StorageClassUniform)
+                {
+                    shaderInfo.ConstantBufferBindings.push_back(allBuffers[i].finalSlot);
+                }
+                else
+                {
+                    shaderInfo.StorageBufferBindings.push_back(allBuffers[i].finalSlot);
+                }
+            }
+
+            auto& pipelineInfo = *static_cast<MetalPipelineData*>(pipelineData.BackendMetadata);
+
+            if (stageIndex == 0)
+            {
+                NSUInteger vertexBufferOffset = 0;
+
+                if (!shaderInfo.ConstantBufferBindings.empty())
+                {
+                    vertexBufferOffset = *std::max_element(shaderInfo.ConstantBufferBindings.begin(), shaderInfo.ConstantBufferBindings.end()) + 1;
+                }
+
+                if (!shaderInfo.StorageBufferBindings.empty())
+                {
+                    vertexBufferOffset = std::max(vertexBufferOffset, *std::max_element(shaderInfo.StorageBufferBindings.begin(), shaderInfo.StorageBufferBindings.end()) + 1);
+                }
+
+                std::size_t attributeCount = 0;
+
+                for (std::size_t i = 0; i < pipelineData.VertexBufferFormats.size(); i++)
+                {
+                    pipelineInfo.VertexBufferBindings.push_back(vertexBufferOffset + i);
+                    attributeCount += pipelineData.VertexBufferFormats[i].Attributes.size();
+                }
+
+                if (resources.stage_inputs.size() != attributeCount)
+                {
+                    throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::RasterPipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                       "SPIR-V vertex shader loading error\n"
+                                                                       "shader has incorrect vertex attribute count for pipeline requirements (path = {})",
+                                           shaderDescriptor.Path);
+                }
+
+                for (std::size_t i = 0; i < resources.stage_inputs.size(); i++)
+                {
+                    auto& attribute = resources.stage_inputs[i];
+
+                    msl.set_decoration(attribute.id, spv::DecorationLocation, static_cast<std::uint32_t>(i));
+                }
+            }
+
+            return {msl.compile(), shaderInfo};
         }
     };
 
-    RendererBackendImplementation<RendererBackend::METAL>::RendererBackendImplementation(const RendererDescriptor& descriptor)
-        : mSpecifics(CreateSpecifics(descriptor))
+    RendererBackendImplementation<RendererBackend::Metal>::RendererBackendImplementation(RendererBackendDescriptor& descriptor)
+        : mSubmissions(descriptor.Submissions), mRasterPipelines(descriptor.RasterPipelines), mBuffers(descriptor.Buffers),
+          mWindow(descriptor.Window), mCocoaWindowLayer(mWindow.CreateInteractionLayer<WindowInteractive::CocoaBackend>())
     {
-        auto layer = mSpecifics->Window.CreateInteractionLayer<WindowInteractive::COCOA_LAYER>();
-        NSWindow* window = static_cast<NSWindow*>(layer.GetCocoaWindow());
+        NSWindow* window = static_cast<NSWindow*>(mCocoaWindowLayer.GetCocoaWindow());
 
-        mSpecifics->Device = MTLCreateSystemDefaultDevice();
-        mSpecifics->CommandQueue = [mSpecifics->Device newCommandQueue];
+        mInternals = std::make_unique<Internals>();
 
-        mSpecifics->MetalLayer = [CAMetalLayer layer];
+        mInternals->Device = MTLCreateSystemDefaultDevice();
+        mInternals->CommandQueue = [mInternals->Device newCommandQueue];
 
-        mSpecifics->MetalLayer.device = mSpecifics->Device;
-        mSpecifics->MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-        mSpecifics->MetalLayer.framebufferOnly = YES;
-        mSpecifics->MetalLayer.maximumDrawableCount = 3;
+        mInternals->MetalLayer = [CAMetalLayer layer];
+
+        mInternals->MetalLayer.device = mInternals->Device;
+        mInternals->MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        mInternals->MetalLayer.framebufferOnly = YES;
+        mInternals->MetalLayer.maximumDrawableCount = 3;
 
         NSView* contentView = window.contentView;
 
         [contentView setWantsLayer:YES];
-        [contentView setLayer:mSpecifics->MetalLayer];
+        [contentView setLayer:mInternals->MetalLayer];
 
         switch (descriptor.VSyncMode)
         {
-            case RendererVSyncMode::DISABLED:
-            {
-                mSpecifics->MetalLayer.displaySyncEnabled = NO;
-
+            case RendererVSyncMode::Disabled:
+                mInternals->MetalLayer.displaySyncEnabled = NO;
                 break;
+            case RendererVSyncMode::Enabled:
+                mInternals->MetalLayer.displaySyncEnabled = YES;
+                break;
+            case RendererVSyncMode::AllowLate:
+                throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::PipelineHandle Systems::Renderer::Renderer(Systems::RendererDescriptor&):\n"
+                                                                   "Metal VSync support conflict\n"
+                                                                   "Metal does not support 'RendererVSyncMode::AllowLate'\n"
+                                                                   "Use another supported VSync mode");
+        }
+    }
+
+    RendererBackendImplementation<RendererBackend::Metal>::~RendererBackendImplementation()
+    {
+        for (auto& submission : mSubmissions.Data)
+        {
+            if (submission.BackendMetadata)
+            {
+                DeleteSubmission(submission);
             }
-            case RendererVSyncMode::STRICT:
-            case RendererVSyncMode::RELAXED:
-            {
-                mSpecifics->MetalLayer.displaySyncEnabled = YES;
+        }
 
-                break;
+        for (auto& pipeline : mRasterPipelines.Data)
+        {
+            if (pipeline.BackendMetadata)
+            {
+                DeletePipeline(pipeline);
+            }
+        }
+
+        for (auto& buffer : mBuffers.Data)
+        {
+            if (buffer.BackendMetadata)
+            {
+                DeallocateBuffer(buffer);
             }
         }
     }
 
-    RendererBackendImplementation<RendererBackend::METAL>::~RendererBackendImplementation()
+    void RendererBackendImplementation<RendererBackend::Metal>::Clear()
     {
-        delete mSpecifics;
-    }
+        mInternals->CurrentDrawable = [mInternals->MetalLayer nextDrawable];
 
-    void RendererBackendImplementation<RendererBackend::METAL>::BeginFrame()
-    {
-        mSpecifics->CurrentDrawable = [mSpecifics->MetalLayer nextDrawable];
-
-        if (!mSpecifics->CurrentDrawable)
+        if (!mInternals->CurrentDrawable)
         {
             return;
         }
 
-        if (mSpecifics->DrawableWidth != mSpecifics->MetalLayer.drawableSize.width || mSpecifics->DrawableHeight != mSpecifics->MetalLayer.drawableSize.height)
+        if (mInternals->DrawableWidth != mInternals->MetalLayer.drawableSize.width || mInternals->DrawableHeight != mInternals->MetalLayer.drawableSize.height)
         {
             MTLTextureDescriptor* depthDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
-                                                                                                       width:mSpecifics->MetalLayer.drawableSize.width
-                                                                                                      height:mSpecifics->MetalLayer.drawableSize.height
+                                                                                                       width:mInternals->MetalLayer.drawableSize.width
+                                                                                                      height:mInternals->MetalLayer.drawableSize.height
                                                                                                    mipmapped:NO];
             depthDescriptor.storageMode = MTLStorageModePrivate;
             depthDescriptor.usage = MTLTextureUsageRenderTarget;
 
-            mSpecifics->DepthTexture = [mSpecifics->Device newTextureWithDescriptor:depthDescriptor];
+            mInternals->DepthTexture = [mInternals->Device newTextureWithDescriptor:depthDescriptor];
 
-            mSpecifics->DrawableWidth = mSpecifics->MetalLayer.drawableSize.width;
-            mSpecifics->DrawableHeight = mSpecifics->MetalLayer.drawableSize.height;
+            mInternals->DrawableWidth = mInternals->MetalLayer.drawableSize.width;
+            mInternals->DrawableHeight = mInternals->MetalLayer.drawableSize.height;
         }
 
-        mSpecifics->RasterCommandBuffer = [mSpecifics->CommandQueue commandBuffer];
+        mInternals->RasterCommandBuffer = [mInternals->CommandQueue commandBuffer];
 
         MTLRenderPassDescriptor* clearPass = [MTLRenderPassDescriptor renderPassDescriptor];
 
-        clearPass.colorAttachments[0].texture = [mSpecifics->CurrentDrawable texture];
+        clearPass.colorAttachments[0].texture = [mInternals->CurrentDrawable texture];
         clearPass.colorAttachments[0].loadAction = MTLLoadActionClear;
         clearPass.colorAttachments[0].storeAction = MTLStoreActionStore;
         clearPass.colorAttachments[0].clearColor = MTLClearColorMake(
-            mSpecifics->ClearColour.r,
-            mSpecifics->ClearColour.g,
-            mSpecifics->ClearColour.b,
-            mSpecifics->ClearColour.a);
+            mInternals->ClearColour.r,
+            mInternals->ClearColour.g,
+            mInternals->ClearColour.b,
+            mInternals->ClearColour.a);
 
-        clearPass.depthAttachment.texture = mSpecifics->DepthTexture;
+        clearPass.depthAttachment.texture = mInternals->DepthTexture;
         clearPass.depthAttachment.loadAction = MTLLoadActionClear;
         clearPass.depthAttachment.storeAction = MTLStoreActionDontCare;
         clearPass.depthAttachment.clearDepth = 1.0;
 
-        id<MTLRenderCommandEncoder> clearEncoder = [mSpecifics->RasterCommandBuffer renderCommandEncoderWithDescriptor:clearPass];
+        id<MTLRenderCommandEncoder> clearEncoder = [mInternals->RasterCommandBuffer renderCommandEncoderWithDescriptor:clearPass];
 
         [clearEncoder endEncoding];
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::EndFrame()
+    void RendererBackendImplementation<RendererBackend::Metal>::Present()
     {
-        if (!mSpecifics->CurrentDrawable)
+        if (!mInternals->CurrentDrawable)
         {
             return;
         }
 
-        [mSpecifics->RasterCommandBuffer presentDrawable:mSpecifics->CurrentDrawable];
-        [mSpecifics->RasterCommandBuffer commit];
+        [mInternals->RasterCommandBuffer presentDrawable:mInternals->CurrentDrawable];
+        [mInternals->RasterCommandBuffer commit];
 
-        mSpecifics->RasterCommandBuffer = nil;
-        mSpecifics->CurrentDrawable = nil;
+        mInternals->RasterCommandBuffer = nil;
+        mInternals->CurrentDrawable = nil;
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::CreateBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor& descriptor)
+    void RendererBackendImplementation<RendererBackend::Metal>::AllocateBuffer(Resources::BufferData& data)
     {
-        auto& data = mSpecifics->Buffers.Insert(handle.ID, MetalBufferData());
+        data.BackendMetadata = new MetalBufferData();
 
-        data.Handle = [mSpecifics->Device newBufferWithLength:descriptor.Size options:MTLResourceStorageModeShared];
+        auto& info = *static_cast<MetalBufferData*>(data.BackendMetadata);
 
-        data.Descriptor = descriptor;
+        info.Handle = [mInternals->Device newBufferWithLength:data.Size options:MTLResourceStorageModeShared];
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::SetBufferData(const Resources::BufferHandle& handle, const Resources::BufferDescriptor&, const Resources::BufferData& data)
+    void RendererBackendImplementation<RendererBackend::Metal>::UploadBufferData(Resources::BufferData& data, const Resources::BufferUploadDescriptor& upload)
     {
-        auto& info = mSpecifics->Buffers.Get(handle.ID);
+        auto& info = *static_cast<MetalBufferData*>(data.BackendMetadata);
 
         std::uint8_t* memory = static_cast<std::uint8_t*>([info.Handle contents]);
-        std::memcpy(memory + data.Offset, data.Data, data.Stride);
+        std::memcpy(memory + upload.Offset, upload.Data, upload.Stride);
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::DeleteBuffer(const Resources::BufferHandle& handle, const Resources::BufferDescriptor&)
+    void RendererBackendImplementation<RendererBackend::Metal>::DeallocateBuffer(Resources::BufferData& data)
     {
-        mSpecifics->Buffers.Remove(handle.ID);
+        auto* info = static_cast<MetalBufferData*>(data.BackendMetadata);
+
+        [info->Handle release];
+
+        delete info;
+
+        data.BackendMetadata = nullptr;
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::CreatePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor& descriptor)
+    void RendererBackendImplementation<RendererBackend::Metal>::CreatePipeline(Resources::RasterPipelineData& data)
     {
-        auto& info = mSpecifics->Pipelines.Insert(handle.ID, MetalPipelineData());
+        data.BackendMetadata = new MetalPipelineData();
 
-        info.Descriptor = descriptor;
+        auto& info = *static_cast<MetalPipelineData*>(data.BackendMetadata);
 
-        auto sources = mSpecifics->ConvertShaderBinaries(info);
+        auto [vertexShaderSource, vertexShaderInfo] = mInternals->ConvertShaderBinary(data, data.VertexShader, 0);
+        auto [pixelShaderSource, pixelShaderInfo] = mInternals->ConvertShaderBinary(data, data.PixelShader, 1);
 
         NSMutableArray<id<MTLFunction>>* functions = [NSMutableArray array];
 
-        NSError* error = nil;
+        NSError* vertexError = nil;
+        NSError* pixelError = nil;
 
-        for (const auto& source : sources)
+        NSString* vertexMsl = [NSString stringWithUTF8String:vertexShaderSource.c_str()];
+        NSString* pixelMsl = [NSString stringWithUTF8String:pixelShaderSource.c_str()];
+
+        id<MTLLibrary> vertexLibrary = [mInternals->Device newLibraryWithSource:vertexMsl options:nil error:&vertexError];
+        id<MTLLibrary> pixelLibrary = [mInternals->Device newLibraryWithSource:pixelMsl options:nil error:&pixelError];
+
+        if (!vertexLibrary)
         {
-            NSString* mslSource = [NSString stringWithUTF8String:source.c_str()];
+            std::string errorStr = [[vertexError localizedDescription] UTF8String];
 
-            id<MTLLibrary> library = [mSpecifics->Device newLibraryWithSource:mslSource
-                                                                      options:nil
-                                                                        error:&error];
+            throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                    "Metal shader compilation error\n"
+                                                                    "failed to compile vertex shader\n"
+                                                                    "Metal compilation error info log:\n\n{}",
+                                   errorStr.data());
+        }
 
-            if (!library)
-            {
-                std::string errorStr = [[error localizedDescription] UTF8String];
+        if (!pixelLibrary)
+        {
+            std::string errorStr = [[pixelError localizedDescription] UTF8String];
 
-                throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                        "Metal shader compilation error\n"
-                                                                        "failed to compile shaders\n"
-                                                                        "Metal compilation error info log:\n\n{}",
-                                       errorStr.data());
-            }
+            throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                    "Metal shader compilation error\n"
+                                                                    "failed to pixel shader\n"
+                                                                    "Metal compilation error info log:\n\n{}",
+                                   errorStr.data());
+        }
 
-            for (const auto& shader : descriptor.Shaders)
-            {
-                id<MTLFunction> function = [library newFunctionWithName:[NSString stringWithUTF8String:shader.Function.c_str()]];
+        id<MTLFunction> vertexFunction = [vertexLibrary newFunctionWithName:[NSString stringWithUTF8String:data.VertexShader.Function.c_str()]];
+        id<MTLFunction> pixelFunction = [vertexLibrary newFunctionWithName:[NSString stringWithUTF8String:data.VertexShader.Function.c_str()]];
 
-                if (function)
-                {
-                    [functions addObject:function];
-                }
-            }
+        if (!vertexFunction)
+        {
+            throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                    "Metal shader compilation error\n"
+                                                                    "specified vertex shader entry does not exist");
+        }
+
+        if (!pixelFunction)
+        {
+            throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
+                                                                    "Metal shader compilation error\n"
+                                                                    "specified pixel shader entry does not exist");
         }
 
         MTLRenderPipelineDescriptor* pipelineDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
 
-        for (id<MTLFunction> function in functions)
-        {
-            NSString* functionName = function.name;
+        pipelineDescriptor.vertexFunction = vertexFunction;
+        pipelineDescriptor.fragmentFunction = pixelFunction;
 
-            for (const auto& shader : descriptor.Shaders)
-            {
-                if (shader.Function == [functionName UTF8String])
-                {
-                    switch (shader.Stage)
-                    {
-                        case Resources::ShaderStage::VERTEX:
-                        {
-                            pipelineDescriptor.vertexFunction = function;
-                            break;
-                        }
-                        case Resources::ShaderStage::PIXEL:
-                        {
-                            pipelineDescriptor.fragmentFunction = function;
-                            break;
-                        }
-                        default:
-                        {
-                            throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
-                                                                                    "Metal pipeline creation error\n"
-                                                                                    "Metal does not support geometry shaders");
-                        }
-                    }
-                }
-            }
-        }
-
-        switch (info.Descriptor.RasterState.Primitive)
+        switch (data.Topology)
         {
-            case Resources::PipelinePrimitive::TRIANGLE_LIST:
-            {
+            case Resources::PolygonTopology::TriangleList:
                 info.Primitive = MTLPrimitiveTypeTriangle;
-
+                pipelineDescriptor.inputPrimitiveTopology = MTLPrimitiveTopologyClassTriangle;
                 break;
-            }
-            case Resources::PipelinePrimitive::LINE_LIST:
-            {
+            case Resources::PolygonTopology::LineList:
                 info.Primitive = MTLPrimitiveTypeLine;
-
+                pipelineDescriptor.inputPrimitiveTopology = MTLPrimitiveTopologyClassLine;
                 break;
-            }
-            case Resources::PipelinePrimitive::POINT:
-            {
+            case Resources::PolygonTopology::Point:
                 info.Primitive = MTLPrimitiveTypePoint;
-
+                pipelineDescriptor.inputPrimitiveTopology = MTLPrimitiveTopologyClassPoint;
                 break;
-            }
         }
 
-        pipelineDescriptor.vertexDescriptor = [mSpecifics->BuildVertexDescriptor(info) retain];
+        pipelineDescriptor.vertexDescriptor = [mInternals->BuildVertexDescriptor(data) retain];
         pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
         pipelineDescriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
-
         pipelineDescriptor.rasterizationEnabled = YES;
 
-        switch (descriptor.RasterState.Primitive)
+        switch (data.CullFace)
         {
-            case Resources::PipelinePrimitive::TRIANGLE_LIST:
-            {
-                pipelineDescriptor.inputPrimitiveTopology = MTLPrimitiveTopologyClassTriangle;
-
-                break;
-            }
-            case Resources::PipelinePrimitive::LINE_LIST:
-            {
-                pipelineDescriptor.inputPrimitiveTopology = MTLPrimitiveTopologyClassLine;
-
-                break;
-            }
-            case Resources::PipelinePrimitive::POINT:
-            {
-                pipelineDescriptor.inputPrimitiveTopology = MTLPrimitiveTopologyClassPoint;
-
-                break;
-            }
-        }
-
-        switch (descriptor.RasterState.FaceCulling)
-        {
-            case Resources::PipelineFaceCulling::FRONTFACE:
-            {
+            case Resources::PolygonCullFace::Front:
                 info.CullMode = MTLCullModeFront;
-
                 break;
-            }
-            case Resources::PipelineFaceCulling::BACKFACE:
-            {
+            case Resources::PolygonCullFace::Back:
                 info.CullMode = MTLCullModeBack;
-
                 break;
-            }
-            case Resources::PipelineFaceCulling::DISABLED:
-            {
+            case Resources::PolygonCullFace::None:
                 info.CullMode = MTLCullModeNone;
-
                 break;
-            }
         }
 
-        switch (descriptor.RasterState.FrontFace)
+        switch (data.FrontFace)
         {
-            case Resources::PipelineFrontFace::CLOCKWISE:
-            {
+            case Resources::PolygonFrontFace::Clockwise:
                 info.CullWinding = MTLWindingClockwise;
-
                 break;
-            }
-            case Resources::PipelineFrontFace::ANTICLOCKWISE:
-            {
+            case Resources::PolygonFrontFace::Anticlockwise:
                 info.CullWinding = MTLWindingCounterClockwise;
-
                 break;
-            }
         }
 
-        switch (descriptor.DepthState.Operation)
+        switch (data.DepthComparison)
         {
-            case Resources::DepthCompareOperation::ALWAYS:
-            {
+            case Resources::ComparisonOperation::Always:
                 info.DepthCompare = MTLCompareFunctionAlways;
-
                 break;
-            }
-            case Resources::DepthCompareOperation::EQUAL:
-            {
+            case Resources::ComparisonOperation::Equal:
                 info.DepthCompare = MTLCompareFunctionEqual;
-
                 break;
-            }
-            case Resources::DepthCompareOperation::GREATER:
-            {
+            case Resources::ComparisonOperation::Greater:
                 info.DepthCompare = MTLCompareFunctionGreater;
-
                 break;
-            }
-            case Resources::DepthCompareOperation::GREATER_EQUAL:
-            {
+            case Resources::ComparisonOperation::GreaterEqual:
                 info.DepthCompare = MTLCompareFunctionGreaterEqual;
-
                 break;
-            }
-            case Resources::DepthCompareOperation::LESS_EQUAL:
-            {
+            case Resources::ComparisonOperation::LessEqual:
                 info.DepthCompare = MTLCompareFunctionLessEqual;
-
                 break;
-            }
-            case Resources::DepthCompareOperation::LESS:
-            {
+            case Resources::ComparisonOperation::Less:
                 info.DepthCompare = MTLCompareFunctionLess;
-
                 break;
-            }
-            case Resources::DepthCompareOperation::NOT_EQUAL:
-            {
+            case Resources::ComparisonOperation::NotEqual:
                 info.DepthCompare = MTLCompareFunctionNotEqual;
-
                 break;
-            }
-            case Resources::DepthCompareOperation::NEVER:
-            {
+            case Resources::ComparisonOperation::Never:
                 info.DepthCompare = MTLCompareFunctionNever;
-
                 break;
-            }
         }
 
-        switch (descriptor.RasterState.PolygonMode)
+        switch (data.FillMode)
         {
-            case Resources::PipelinePolygonMode::SOLID:
-            {
+            case Resources::PolygonFillMode::Solid:
                 info.FillMode = MTLTriangleFillModeFill;
-
                 break;
-            }
-            case Resources::PipelinePolygonMode::LINE:
-            {
+            case Resources::PolygonFillMode::Line:
                 info.FillMode = MTLTriangleFillModeLines;
-
                 break;
-            }
-            case Resources::PipelinePolygonMode::POINT:
-            {
+            case Resources::PolygonFillMode::Point:
                 throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
                                                                         "Metal pipeline creation error\n"
                                                                         "Metal does not support point fill mode");
-            }
         }
 
         NSError* pipelineError = nil;
 
-        info.State = [mSpecifics->Device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&pipelineError];
+        info.State = [mInternals->Device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&pipelineError];
 
         if (!info.State)
         {
             std::string errorStr = [[pipelineError localizedDescription] UTF8String];
+
             throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR, "Resources::PipelineHandle Systems::Renderer::CreatePipeline(const Resources::RasterPipelineDescriptor&):\n"
                                                                     "Metal pipeline creation error\n"
                                                                     "Metal error info log:\n\n{}",
@@ -931,191 +726,74 @@ namespace Systems
         MTLDepthStencilDescriptor* depthStencilDescriptor = [[MTLDepthStencilDescriptor alloc] init];
 
         depthStencilDescriptor.depthCompareFunction = info.DepthCompare;
-        depthStencilDescriptor.depthWriteEnabled = info.Descriptor.DepthState.Write;
+        depthStencilDescriptor.depthWriteEnabled = data.DepthWrite;
 
-        info.DepthStencilState = [mSpecifics->Device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+        info.DepthStencilState = [mInternals->Device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::DeletePipeline(const Resources::PipelineHandle& handle, const Resources::RasterPipelineDescriptor&)
+    void RendererBackendImplementation<RendererBackend::Metal>::DeletePipeline(Resources::RasterPipelineData& data)
     {
-        mSpecifics->Pipelines.Remove(handle.ID);
+        auto* info = static_cast<MetalPipelineData*>(data.BackendMetadata);
+
+        [info->State release];
+
+        delete info;
+
+        data.BackendMetadata = nullptr;
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::CreateSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor& descriptor)
+    void RendererBackendImplementation<RendererBackend::Metal>::CreateSubmission(Resources::SubmissionData& data)
     {
-        auto& info = mSpecifics->Submissions.Insert(handle.ID, MetalSubmissionData());
+        data.BackendMetadata = new MetalSubmissionData();
 
-        info.Descriptor = descriptor;
+        auto& info = *static_cast<MetalSubmissionData*>(data.BackendMetadata);
+        auto& indexBufferData = mBuffers.Data.Get(data.IndexBuffer.ID);
 
-        auto typeInfo = mSpecifics->GetTypeInfo(descriptor.IndexBufferType);
-        auto& indexBufferData = mSpecifics->Buffers.Get(descriptor.IndexBuffer.ID);
-
-        info.IndexCount = indexBufferData.Descriptor.Size / typeInfo.Size;
-
-        switch (descriptor.IndexBufferType)
+        switch (data.IndexFormat)
         {
-            case Resources::BufferAttributeType::R16_UINT:
-            {
+            case Resources::IndexType::U16:
                 info.IndexType = MTLIndexTypeUInt16;
-
+                info.IndexCount = indexBufferData.Size / 2;
                 break;
-            }
-            case Resources::BufferAttributeType::R32_UINT:
-            {
+            case Resources::IndexType::U32:
                 info.IndexType = MTLIndexTypeUInt32;
-
+                info.IndexCount = indexBufferData.Size / 4;
                 break;
-            }
-            default:
-            {
-                return;
-            }
         }
     }
 
-    void RendererBackendImplementation<RendererBackend::METAL>::DeleteSubmission(const Resources::SubmissionHandle& handle, const Resources::SubmissionDescriptor&)
+    void RendererBackendImplementation<RendererBackend::Metal>::DeleteSubmission(Resources::SubmissionData& data)
     {
-        mSpecifics->Submissions.Remove(handle.ID);
-    }
+        auto* info = static_cast<MetalSubmissionData*>(data.BackendMetadata);
 
-    void RendererBackendImplementation<RendererBackend::METAL>::CreateCommandBuffer(const CommandBuffer& commandBuffer)
-    {
-    }
+        delete info;
 
-    void RendererBackendImplementation<RendererBackend::METAL>::SubmitToCommandBuffer(const CommandBuffer&, const Resources::SubmissionHandle&)
-    {
-    }
-
-    void RendererBackendImplementation<RendererBackend::METAL>::DrawCommandBuffer(const CommandBuffer& buffer)
-    {
-        auto& submissions = buffer.GetContents();
-
-        if (!mSpecifics->RasterCommandBuffer || !mSpecifics->CurrentDrawable)
-        {
-            return;
-        }
-
-        for (auto& submission : submissions)
-        {
-            auto& submissionInfo = mSpecifics->Submissions.Get(submission.ID);
-            auto& pipelineInfo = mSpecifics->Pipelines.Get(submissionInfo.Descriptor.Pipeline.ID);
-            auto& indexBufferInfo = mSpecifics->Buffers.Get(submissionInfo.Descriptor.IndexBuffer.ID);
-
-            MTLRenderPassDescriptor* passDescriptor = [MTLRenderPassDescriptor renderPassDescriptor];
-
-            passDescriptor.colorAttachments[0].texture = [mSpecifics->CurrentDrawable texture];
-            passDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
-            passDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-
-            passDescriptor.depthAttachment.texture = mSpecifics->DepthTexture;
-            passDescriptor.depthAttachment.loadAction = MTLLoadActionDontCare;
-            passDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
-            passDescriptor.depthAttachment.clearDepth = 1.0;
-
-            id<MTLRenderCommandEncoder> encoder = [mSpecifics->RasterCommandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
-
-            [encoder setRenderPipelineState:pipelineInfo.State];
-
-            if (pipelineInfo.Descriptor.DepthState.Test)
-            {
-                [encoder setDepthStencilState:pipelineInfo.DepthStencilState];
-            }
-
-            for (std::size_t stageIndex = 0; stageIndex < pipelineInfo.ShaderInfo.size(); stageIndex++)
-            {
-                auto& shaderInfo = pipelineInfo.ShaderInfo[stageIndex];
-                auto& stageDescriptor = submissionInfo.Descriptor.ShaderStages[stageIndex];
-
-                for (std::size_t i = 0; i < stageDescriptor.ConstantBuffers.size(); i++)
-                {
-                    auto& bufferHandle = stageDescriptor.ConstantBuffers[i];
-                    auto& bufferData = mSpecifics->Buffers.Get(bufferHandle.ID);
-
-                    if (stageDescriptor.Stage == Resources::ShaderStage::VERTEX)
-                    {
-                        [encoder setVertexBuffer:bufferData.Handle offset:0 atIndex:shaderInfo.ConstantBufferBindings[i]];
-                    }
-                    else if (stageDescriptor.Stage == Resources::ShaderStage::PIXEL)
-                    {
-                        [encoder setFragmentBuffer:bufferData.Handle offset:0 atIndex:shaderInfo.ConstantBufferBindings[i]];
-                    }
-                }
-
-                for (std::size_t i = 0; i < stageDescriptor.StorageBuffers.size(); i++)
-                {
-                    auto& bufferHandle = stageDescriptor.StorageBuffers[i];
-                    auto& bufferData = mSpecifics->Buffers.Get(bufferHandle.ID);
-
-                    if (stageDescriptor.Stage == Resources::ShaderStage::VERTEX)
-                    {
-                        [encoder setVertexBuffer:bufferData.Handle offset:0 atIndex:shaderInfo.StorageBufferBindings[i]];
-                    }
-                    else if (stageDescriptor.Stage == Resources::ShaderStage::PIXEL)
-                    {
-                        [encoder setFragmentBuffer:bufferData.Handle offset:0 atIndex:shaderInfo.StorageBufferBindings[i]];
-                    }
-                }
-
-                if (stageDescriptor.Stage == Resources::ShaderStage::VERTEX)
-                {
-                    for (std::size_t i = 0; i < submissionInfo.Descriptor.VertexBuffers.size(); i++)
-                    {
-                        auto& vertexBufferHandle = submissionInfo.Descriptor.VertexBuffers[i];
-                        auto& vertexBufferData = mSpecifics->Buffers.Get(vertexBufferHandle.ID);
-
-                        [encoder setVertexBuffer:vertexBufferData.Handle offset:0 atIndex:pipelineInfo.VertexBufferBindings[i]];
-                    }
-                }
-            }
-
-            auto& indexBufferData = mSpecifics->Buffers.Get(submissionInfo.Descriptor.IndexBuffer.ID);
-
-            [encoder setTriangleFillMode:pipelineInfo.FillMode];
-            [encoder setCullMode:pipelineInfo.CullMode];
-            [encoder setFrontFacingWinding:pipelineInfo.CullWinding];
-            [encoder drawIndexedPrimitives:pipelineInfo.Primitive
-                                indexCount:submissionInfo.IndexCount
-                                 indexType:submissionInfo.IndexType
-                               indexBuffer:indexBufferData.Handle
-                         indexBufferOffset:0];
-            [encoder endEncoding];
-        }
-    }
-
-    void RendererBackendImplementation<RendererBackend::METAL>::DeleteCommandBuffer(const CommandBuffer& commandBuffer)
-    {
+        data.BackendMetadata = nullptr;
     }
 
     template <>
-    void RendererBackendImplementation<RendererBackend::METAL>::Set<RendererAttribute::VSYNC_MODE>(const RendererAttributeType<RendererAttribute::VSYNC_MODE>::Type& vsyncMode)
+    void RendererBackendImplementation<RendererBackend::Metal>::Set<RendererAttribute::VSyncMode>(const RendererVSyncMode& vsyncMode)
     {
         switch (vsyncMode)
         {
-            case RendererVSyncMode::DISABLED:
-            {
-                mSpecifics->MetalLayer.displaySyncEnabled = NO;
-
+            case RendererVSyncMode::Disabled:
+                mInternals->MetalLayer.displaySyncEnabled = NO;
                 break;
-            }
-            case RendererVSyncMode::STRICT:
-            case RendererVSyncMode::RELAXED:
-            {
-                mSpecifics->MetalLayer.displaySyncEnabled = YES;
-
+            case RendererVSyncMode::Enabled:
+                mInternals->MetalLayer.displaySyncEnabled = YES;
                 break;
-            }
+            case RendererVSyncMode::AllowLate:
+                throw Debug::Exception(Debug::ErrorCode::CONFLICT, "Resources::PipelineHandle Systems::Renderer::Renderer(Systems::RendererDescriptor&):\n"
+                                                                   "Metal VSync support conflict\n"
+                                                                   "Metal does not support 'RendererVSyncMode::AllowLate'\n"
+                                                                   "Use another supported VSync mode");
         }
     }
 
     template <>
-    void RendererBackendImplementation<RendererBackend::METAL>::Set<RendererAttribute::CLEAR_COLOUR>(const RendererAttributeType<RendererAttribute::CLEAR_COLOUR>::Type& clearColour)
+    void RendererBackendImplementation<RendererBackend::Metal>::Set<RendererAttribute::ClearColour>(const RendererClearColour& clearColour)
     {
-        mSpecifics->ClearColour = clearColour;
-    }
-
-    RendererBackendImplementationSpecifics* RendererBackendImplementation<RendererBackend::METAL>::CreateSpecifics(const RendererDescriptor& descriptor)
-    {
-        return new RendererBackendImplementationSpecifics(descriptor.Window);
+        mInternals->ClearColour = clearColour;
     }
 }
 #endif

@@ -32,7 +32,7 @@ namespace Program
     Systems::ContextDescriptor Application::CreateContext()
     {
         return {
-            .Renderer = Systems::RendererBackend::OpenGL,
+            .Renderer = Systems::RendererBackend::Metal,
         };
     }
 
