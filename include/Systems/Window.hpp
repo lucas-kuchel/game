@@ -43,10 +43,10 @@ namespace Systems
 
     enum class WindowInteractive
     {
-        OpenGL,
         Vulkan,
 
         CocoaBackend,
+        Win32Backend,
     };
 
     enum class Key
@@ -261,22 +261,6 @@ namespace Systems
     class WindowInteractionLayer;
 
     template <>
-    class WindowInteractionLayer<WindowInteractive::OpenGL>
-    {
-    public:
-        void MakeContextCurrent();
-        void SwapBuffers();
-        void SetSwapInterval(int interval);
-
-    private:
-        friend class Window;
-
-        explicit WindowInteractionLayer(void* handle);
-
-        void* mHandle;
-    };
-
-    template <>
     class WindowInteractionLayer<WindowInteractive::Vulkan>
     {
     public:
@@ -286,23 +270,37 @@ namespace Systems
     private:
         friend class Window;
 
-        explicit WindowInteractionLayer(void* handle);
+        explicit WindowInteractionLayer(GLFWwindow* handle);
 
-        void* mHandle;
+        GLFWwindow* mHandle;
     };
 
     template <>
     class WindowInteractionLayer<WindowInteractive::CocoaBackend>
     {
     public:
-        void* GetCocoaWindow();
+        void* GetNSWindow();
 
     private:
         friend class Window;
 
-        explicit WindowInteractionLayer(void* handle);
+        explicit WindowInteractionLayer(GLFWwindow* handle);
 
-        void* mHandle;
+        GLFWwindow* mHandle;
+    };
+
+    template <>
+    class WindowInteractionLayer<WindowInteractive::Win32Backend>
+    {
+    public:
+        void* GetHWND();
+
+    private:
+        friend class Window;
+
+        explicit WindowInteractionLayer(GLFWwindow* handle);
+
+        GLFWwindow* mHandle;
     };
 
     template <WindowAttribute A>
@@ -368,9 +366,6 @@ namespace Systems
         }
 
     private:
-        void InitialiseHintsOpenGL();
-        void InitialiseHintsDefault();
-
         template <WindowInteractive I>
         void ValidateInteractionLayerRequest() const
         {
@@ -378,10 +373,10 @@ namespace Systems
 
             switch (I)
             {
-                case WindowInteractive::OpenGL:
-                    if (renderer != RendererBackend::OpenGL)
+                case WindowInteractive::Win32Backend:
+                    if (renderer != RendererBackend::DirectX12)
                     {
-                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::OPENGL> Systems::Window::CreateInteractionLayer<WindowInteractive::OPENGL_LAYER>():\n"
+                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::Win32Backend> Systems::Window::CreateInteractionLayer<WindowInteractive::Win32Backend>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }
@@ -389,7 +384,7 @@ namespace Systems
                 case WindowInteractive::Vulkan:
                     if (renderer != RendererBackend::Vulkan)
                     {
-                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::VULKAN>():\n"
+                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::Vulkan> Systems::Window::CreateInteractionLayer<WindowInteractive::Vulkan>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }
@@ -397,7 +392,7 @@ namespace Systems
                 case WindowInteractive::CocoaBackend:
                     if (renderer != RendererBackend::Metal)
                     {
-                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::VULKAN> Systems::Window::CreateInteractionLayer<WindowInteractive::COCOA_LAYER>():\n"
+                        throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::WindowInteractionLayer<WindowInteractive::CocoaBackend> Systems::Window::CreateInteractionLayer<WindowInteractive::CocoaBackend>():\n"
                                                                                    "invalid argument error\n"
                                                                                    "context renderer API and interaction layer API do not match");
                     }

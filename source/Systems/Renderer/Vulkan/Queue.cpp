@@ -13,6 +13,10 @@ namespace Systems
     {
     }
 
+    void RendererBackendImplementation<RendererBackend::Vulkan>::CommitQueue(Resources::RenderQueueData& data)
+    {
+    }
+
     void RendererBackendImplementation<RendererBackend::Vulkan>::DeleteQueue(Resources::RenderQueueData& data)
     {
     }

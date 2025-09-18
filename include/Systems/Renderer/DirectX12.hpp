@@ -28,7 +28,7 @@ namespace Systems
     struct RendererBackendDescriptor;
 
     template <>
-    class RendererBackendImplementation<RendererBackend::Metal>
+    class RendererBackendImplementation<RendererBackend::DirectX12>
     {
     public:
         RendererBackendImplementation(RendererBackendDescriptor& descriptor);
@@ -68,6 +68,6 @@ namespace Systems
 
         RendererWindow& mWindow;
 
-        WindowInteractionLayer<WindowInteractive::CocoaBackend> mCocoaWindowLayer;
+        WindowInteractionLayer<WindowInteractive::Win32Backend> mWin32WindowLayer;
     };
 }

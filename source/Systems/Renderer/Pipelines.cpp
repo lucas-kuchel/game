@@ -1,7 +1,7 @@
 #include <Systems/Renderer.hpp>
 
+#include <Systems/Renderer/DirectX12.hpp>
 #include <Systems/Renderer/Metal.hpp>
-#include <Systems/Renderer/OpenGL.hpp>
 #include <Systems/Renderer/Vulkan.hpp>
 
 namespace Systems

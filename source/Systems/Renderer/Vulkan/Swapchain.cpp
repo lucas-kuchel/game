@@ -13,13 +13,7 @@ namespace Systems
     {
     }
 
-    template <>
-    void RendererBackendImplementation<RendererBackend::Vulkan>::Set<RendererAttribute::ClearColour>(const RendererClearColour& clearColour)
-    {
-    }
-
-    template <>
-    void RendererBackendImplementation<RendererBackend::Vulkan>::Set<RendererAttribute::VSyncMode>(const RendererVSyncMode& vsyncMode)
+    void RendererBackendImplementation<RendererBackend::Vulkan>::SetVSyncMode(RendererVSyncMode)
     {
     }
 }

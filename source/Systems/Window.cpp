@@ -12,8 +12,6 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#include <cstring>
-
 namespace Systems
 {
     Key MapKey(int glfwKey)
@@ -230,12 +228,7 @@ namespace Systems
         throw;
     }
 
-    WindowInteractionLayer<WindowInteractive::OpenGL>::WindowInteractionLayer(void* handle)
-        : mHandle(handle)
-    {
-    }
-
-    WindowInteractionLayer<WindowInteractive::Vulkan>::WindowInteractionLayer(void* handle)
+    WindowInteractionLayer<WindowInteractive::Vulkan>::WindowInteractionLayer(GLFWwindow* handle)
         : mHandle(handle)
     {
         if (!glfwVulkanSupported())
@@ -250,16 +243,7 @@ namespace Systems
     Window::Window(const WindowDescriptor& descriptor)
         : mContext(descriptor.Context), mTitle(descriptor.Title), mSize(descriptor.Size), mVisibility(descriptor.Visibility), mShown(descriptor.Shown)
     {
-        const RendererBackend& rendererBackend = descriptor.Context.Get<ContextAttribute::Renderer>();
-
-        switch (rendererBackend)
-        {
-            case RendererBackend::OpenGL:
-                InitialiseHintsOpenGL();
-                break;
-            default:
-                InitialiseHintsDefault();
-        }
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         mHandle = glfwCreateWindow(mSize[0], mSize[1], mTitle.c_str(), nullptr, nullptr);
 
@@ -316,7 +300,7 @@ namespace Systems
 
     Window::~Window()
     {
-        glfwDestroyWindow(static_cast<GLFWwindow*>(mHandle));
+        glfwDestroyWindow(mHandle);
 
         mHandle = nullptr;
     }
@@ -330,14 +314,14 @@ namespace Systems
     {
         if (mSizeDirty)
         {
-            glfwSetWindowSize(static_cast<GLFWwindow*>(mHandle), mSize[0], mSize[1]);
+            glfwSetWindowSize(mHandle, mSize[0], mSize[1]);
 
             mSizeDirty = false;
         }
 
         if (mTitleDirty)
         {
-            glfwSetWindowTitle(static_cast<GLFWwindow*>(mHandle), mTitle.c_str());
+            glfwSetWindowTitle(mHandle, mTitle.c_str());
 
             mTitleDirty = false;
         }
@@ -435,34 +419,6 @@ namespace Systems
         mShownDirty = true;
     }
 
-    void Window::InitialiseHintsOpenGL()
-    {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    }
-
-    void Window::InitialiseHintsDefault()
-    {
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    }
-
-    void WindowInteractionLayer<WindowInteractive::OpenGL>::MakeContextCurrent()
-    {
-        glfwMakeContextCurrent(static_cast<GLFWwindow*>(mHandle));
-    }
-
-    void WindowInteractionLayer<WindowInteractive::OpenGL>::SwapBuffers()
-    {
-        glfwSwapBuffers(static_cast<GLFWwindow*>(mHandle));
-    }
-
-    void WindowInteractionLayer<WindowInteractive::OpenGL>::SetSwapInterval(int interval)
-    {
-        glfwSwapInterval(interval);
-    }
-
     std::vector<std::string_view> WindowInteractionLayer<WindowInteractive::Vulkan>::GetRequiredInstanceExtensions()
     {
         std::uint32_t count = 0;
@@ -472,7 +428,7 @@ namespace Systems
         if (extensions == nullptr || count == 0)
         {
             throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
-                                   "std::vector<std::string_view> Systems::WindowInteractionLayer<WindowInteractive::VULKAN>::GetRequiredInstanceExtensions():\n"
+                                   "std::vector<std::string_view> Systems::WindowInteractionLayer<WindowInteractive::Vulkan>::GetRequiredInstanceExtensions():\n"
                                    "general error\n"
                                    "no Vulkan extensions requested by window\n"
                                    "no extensions may be available");
@@ -485,12 +441,12 @@ namespace Systems
     {
         VkSurfaceKHR surface;
 
-        VkResult result = glfwCreateWindowSurface(instance, static_cast<GLFWwindow*>(mHandle), allocator, &surface);
+        VkResult result = glfwCreateWindowSurface(instance, mHandle, allocator, &surface);
 
         if (result != VK_SUCCESS)
         {
             throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
-                                   "VkSurfaceKHR Systems::WindowInteractionLayer<WindowInteractive::VULKAN>::CreateWindowSurface(VkInstance, const VkAllocationCallbacks*):\n"
+                                   "VkSurfaceKHR Systems::WindowInteractionLayer<WindowInteractive::Vulkan>::CreateWindowSurface(VkInstance, const VkAllocationCallbacks*):\n"
                                    "general error\n"
                                    "failed to create Vulkan window surface");
         }
@@ -498,23 +454,42 @@ namespace Systems
         return surface;
     }
 
-    WindowInteractionLayer<WindowInteractive::CocoaBackend>::WindowInteractionLayer(void* handle)
+    WindowInteractionLayer<WindowInteractive::CocoaBackend>::WindowInteractionLayer(GLFWwindow* handle)
         : mHandle(handle)
     {
     }
 
-    void* WindowInteractionLayer<WindowInteractive::CocoaBackend>::GetCocoaWindow()
+    void* WindowInteractionLayer<WindowInteractive::CocoaBackend>::GetNSWindow()
     {
 #if defined(PLATFORM_APPLE)
-        return glfwGetCocoaWindow(static_cast<GLFWwindow*>(mHandle));
+        return glfwGetCocoaWindow(mHandle);
 #endif
 
         throw Debug::Exception(Debug::ErrorCode::PERMISSION_DENIED,
-                               "void* Systems::WindowInteractionLayer<WindowInteractive::COCOA_LAYER>::GetCocoaWindow():\n"
+                               "void* Systems::WindowInteractionLayer<WindowInteractive::CocoaBackend>::GetNSWindow():\n"
                                "permission denied\n"
-                               "current platform does not support WindowInteractionLayer<COCOA_LAYER>\n"
-                               " WindowInteractionLayer<COCOA_LAYER> is available for:\n"
+                               "current platform does not support WindowInteractionLayer<CocoaBackend>\n"
+                               " WindowInteractionLayer<CocoaBackend> is available for:\n"
                                "\t- macOS");
+    }
+
+    WindowInteractionLayer<WindowInteractive::Win32Backend>::WindowInteractionLayer(GLFWwindow* handle)
+        : mHandle(handle)
+    {
+    }
+
+    void* WindowInteractionLayer<WindowInteractive::Win32Backend>::GetHWND()
+    {
+#if defined(PLATFORM_WINDOWS)
+        return glfwGetWin32Window(mHandle);
+#endif
+
+        throw Debug::Exception(Debug::ErrorCode::PERMISSION_DENIED,
+                               "void* Systems::WindowInteractionLayer<WindowInteractive::Win32Backend>::GetWin32Window():\n"
+                               "permission denied\n"
+                               "current platform does not support WindowInteractionLayer<Win32Backend>\n"
+                               " WindowInteractionLayer<Win32Backend> is available for:\n"
+                               "\t- Windows");
     }
 
     void Window::SizeCallback(GLFWwindow* window, int width, int height)
@@ -587,11 +562,11 @@ namespace Systems
         self->mVisibility = iconified ? WindowVisibility::Iconified : WindowVisibility::Windowed;
     }
 
-    void Window::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    void Window::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int)
     {
         auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
 
-        if (!self || action != GLFW_PRESS && action != GLFW_RELEASE)
+        if (!self || (action != GLFW_PRESS && action != GLFW_RELEASE))
         {
             return;
         }
@@ -611,7 +586,7 @@ namespace Systems
         self->mEventQueue.push(scancodeEvent);
     }
 
-    void Window::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+    void Window::MouseButtonCallback(GLFWwindow* window, int button, int action, int)
     {
         auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
 

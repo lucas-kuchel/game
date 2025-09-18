@@ -1,7 +1,7 @@
 #include <Systems/Renderer.hpp>
 
+#include <Systems/Renderer/DirectX12.hpp>
 #include <Systems/Renderer/Metal.hpp>
-#include <Systems/Renderer/OpenGL.hpp>
 #include <Systems/Renderer/Vulkan.hpp>
 
 namespace Systems
@@ -22,7 +22,12 @@ namespace Systems
             mRenderPasses.FreeList.pop_back();
         }
 
-        auto& info = mRenderPasses.Data.Insert(handle.ID, Resources::RenderPassData{.RenderQueues = {}, .BackendMetadata = nullptr});
+        auto& info = mRenderPasses.Data.Insert(handle.ID, Resources::RenderPassData());
+
+        info.BackendMetadata = nullptr;
+        info.ColourAttachments = descriptor.ColourAttachments;
+        info.DepthAttachment = descriptor.DepthAttachment;
+        info.StencilAttachment = descriptor.StencilAttachment;
 
         std::visit([&](auto& backend)
                    { backend->CreateRenderPass(info); }, mBackend);
@@ -41,49 +46,6 @@ namespace Systems
         }
 
         return mRenderPasses.Data.Get(handle.ID);
-    }
-
-    void Renderer::SubmitRenderQueue(const Resources::RenderPassHandle& handle, const Resources::RenderQueueHandle& queue)
-    {
-        if (!mRenderPasses.Data.Contains(handle.ID) || mRenderPasses.Generations[handle.ID] != handle.Generation)
-        {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
-                                   "void Systems::Renderer::SubmitQueue(const Resources::RenderPassHandle&, const Resources::RenderQueueHandle&):\n"
-                                   "Invalid argument\n"
-                                   "provided render pass does not exist");
-        }
-
-        if (!mRenderQueues.Data.Contains(queue.ID) || mRenderQueues.Generations[queue.ID] != queue.Generation)
-        {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
-                                   "void Systems::Renderer::SubmitQueue(const Resources::RenderPassHandle&, const Resources::RenderQueueHandle&):\n"
-                                   "Invalid argument\n"
-                                   "provided render queue does not exist");
-        }
-
-        auto& info = mRenderPasses.Data.Get(handle.ID);
-        auto& queueInfo = mRenderQueues.Data.Get(queue.ID);
-
-        info.RenderQueues.push_back(queue);
-
-        std::visit([&](auto& backend)
-                   { backend->SubmitRenderQueue(info, queueInfo); }, mBackend);
-    }
-
-    void Renderer::SubmitRenderPass(const Resources::RenderPassHandle& handle)
-    {
-        if (!mRenderPasses.Data.Contains(handle.ID) || mRenderPasses.Generations[handle.ID] != handle.Generation)
-        {
-            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
-                                   "void Systems::Renderer::SubmitRenderPass(const Resources::RenderPassHandle&):\n"
-                                   "Invalid argument\n"
-                                   "provided render pass does not exist");
-        }
-
-        auto& info = mRenderPasses.Data.Get(handle.ID);
-
-        std::visit([&](auto& backend)
-                   { backend->SubmitRenderPass(info); }, mBackend);
     }
 
     void Renderer::DeleteRenderPass(const Resources::RenderPassHandle& handle)

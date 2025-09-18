@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Resources/RenderPass.hpp>
 #include <Resources/Submissions.hpp>
 
 #include <cstdlib>
@@ -8,6 +9,11 @@
 
 namespace Resources
 {
+    struct RenderQueueDescriptor
+    {
+        RenderPassHandle RenderPass;
+    };
+
     struct RenderQueueData
     {
         std::vector<SubmissionHandle> Submissions;

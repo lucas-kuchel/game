@@ -51,7 +51,7 @@ namespace Program
     Systems::ContextDescriptor Application::CreateContext()
     {
         return {
-            .Renderer = Systems::RendererBackend::Metal,
+            .Renderer = Systems::RendererBackend::Vulkan,
         };
     }
 
@@ -61,8 +61,8 @@ namespace Program
             .Context = mContext,
             .Title = "New Window",
             .Size = {800u, 600u},
-            .Shown = true,
             .Visibility = Systems::WindowVisibility::Windowed,
+            .Shown = true,
         };
     }
 
@@ -71,7 +71,6 @@ namespace Program
         return {
             .Context = mContext,
             .Window = mWindow,
-            .ClearColour = {0.0f, 0.0f, 0.0f, 1.0f},
             .VSyncMode = Systems::RendererVSyncMode::Enabled,
         };
     }

@@ -1,12 +1,12 @@
 #include <Systems/Renderer.hpp>
 
+#include <Systems/Renderer/DirectX12.hpp>
 #include <Systems/Renderer/Metal.hpp>
-#include <Systems/Renderer/OpenGL.hpp>
 #include <Systems/Renderer/Vulkan.hpp>
 
 namespace Systems
 {
-    Resources::RenderQueueHandle Renderer::CreateRenderQueue()
+    Resources::RenderQueueHandle Renderer::CreateRenderQueue(const Resources::RenderQueueDescriptor& descriptor)
     {
         Resources::RenderQueueHandle handle;
 
@@ -22,7 +22,7 @@ namespace Systems
             mRenderQueues.FreeList.pop_back();
         }
 
-        auto& info = mRenderQueues.Data.Insert(handle.ID, Resources::RenderQueueData{.Submissions = {}, .BackendMetadata = nullptr});
+        auto& info = mRenderQueues.Data.Insert(handle.ID, Resources::RenderQueueData{.Submissions = {}, .RenderPass = descriptor.RenderPass, .BackendMetadata = nullptr});
 
         std::visit([&](auto& backend)
                    { backend->CreateRenderQueue(info); }, mBackend);
@@ -68,6 +68,24 @@ namespace Systems
 
         std::visit([&](auto& backend)
                    { backend->SubmitSubmission(data, submissionData); }, mBackend);
+    }
+
+    void Renderer::CommitQueue(const Resources::RenderQueueHandle& handle)
+    {
+        if (!mRenderQueues.Data.Contains(handle.ID) || mRenderQueues.Generations[handle.ID] != handle.Generation)
+        {
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
+                                   "void Systems::Renderer::DeleteQueue(const Resources::RenderQueueHandle&):\n"
+                                   "Invalid argument\n"
+                                   "provided render queue does not exist");
+        }
+
+        auto& data = mRenderQueues.Data.Get(handle.ID);
+
+        std::visit([&](auto& backend)
+                   { backend->CommitQueue(data); }, mBackend);
+
+        data.Submissions.clear();
     }
 
     void Renderer::DeleteQueue(const Resources::RenderQueueHandle& handle)

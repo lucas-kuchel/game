@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Resources/Queue.hpp>
+#include <Resources/Attachments.hpp>
 
 #include <cstdlib>
 #include <limits>
@@ -10,12 +10,18 @@ namespace Resources
 {
     struct RenderPassDescriptor
     {
-        // frame attachments will go here
+        std::vector<ColourAttachmentDescriptor> ColourAttachments;
+
+        DepthAttachmentDescriptor DepthAttachment;
+        StencilAttachmentDescriptor StencilAttachment;
     };
 
     struct RenderPassData
     {
-        std::vector<RenderQueueHandle> RenderQueues;
+        std::vector<ColourAttachmentDescriptor> ColourAttachments;
+
+        DepthAttachmentDescriptor DepthAttachment;
+        StencilAttachmentDescriptor StencilAttachment;
 
         void* BackendMetadata = nullptr;
     };

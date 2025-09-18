@@ -4,7 +4,7 @@ namespace Systems
 {
     enum class RendererBackend
     {
-        OpenGL,
+        DirectX12,
         Vulkan,
         Metal,
     };

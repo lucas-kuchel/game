@@ -34,12 +34,12 @@ namespace Systems
                                                                            "change Systems::ContextDescriptor::Renderer to Metal for macOS");
 #endif
                 break;
-            case RendererBackend::OpenGL:
-#if defined(PLATFORM_APPLE)
+            case RendererBackend::DirectX12:
+#if defined(PLATFORM_UNIX)
                 throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::Context::Context():\n"
                                                                            "\n"
-                                                                           "OpenGL graphics API is unavailable on macOS\n"
-                                                                           "change Systems::ContextDescriptor::Renderer to Metal for macOS");
+                                                                           "Direct3D graphics API is unavailable on Unix-like operating systems\n"
+                                                                           "change Systems::ContextDescriptor::Renderer to Metal for macOS or Vulkan for Linux");
 #endif
                 break;
         }

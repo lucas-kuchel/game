@@ -4,9 +4,10 @@
 #include <Systems/Window.hpp>
 
 #include <Resources/Buffer.hpp>
+#include <Resources/PhysicalDevice.hpp>
 #include <Resources/Pipelines.hpp>
-#include <Resources/Queue.hpp>
 #include <Resources/RenderPass.hpp>
+#include <Resources/RenderQueue.hpp>
 #include <Resources/Submissions.hpp>
 
 #include <Types/SparseSet.hpp>
@@ -18,12 +19,6 @@
 
 namespace Systems
 {
-    enum class RendererAttribute
-    {
-        VSyncMode,
-        ClearColour,
-    };
-
     enum class RendererVSyncMode
     {
         Enabled,
@@ -31,7 +26,6 @@ namespace Systems
         Disabled,
     };
 
-    using RendererClearColour = glm::fvec4;
     using RendererContext = Context;
     using RendererWindow = Window;
 
@@ -40,23 +34,7 @@ namespace Systems
         RendererContext& Context;
         RendererWindow& Window;
 
-        RendererClearColour ClearColour = {0.0f, 0.0f, 0.0f, 1.0f};
         RendererVSyncMode VSyncMode = RendererVSyncMode::Enabled;
-    };
-
-    template <RendererAttribute A>
-    struct RendererAttributeType;
-
-    template <>
-    struct RendererAttributeType<RendererAttribute::VSyncMode>
-    {
-        using Type = RendererVSyncMode;
-    };
-
-    template <>
-    struct RendererAttributeType<RendererAttribute::ClearColour>
-    {
-        using Type = RendererClearColour;
     };
 
     template <typename T>
@@ -79,12 +57,11 @@ namespace Systems
 
         RendererWindow& Window;
 
-        RendererClearColour ClearColour;
         RendererVSyncMode VSyncMode;
     };
 
     using RendererBackendVariant = std::variant<
-        std::unique_ptr<RendererBackendImplementation<RendererBackend::OpenGL>>,
+        std::unique_ptr<RendererBackendImplementation<RendererBackend::DirectX12>>,
         std::unique_ptr<RendererBackendImplementation<RendererBackend::Vulkan>>,
         std::unique_ptr<RendererBackendImplementation<RendererBackend::Metal>>>;
 
@@ -113,24 +90,20 @@ namespace Systems
 
         void DeleteSubmission(const Resources::SubmissionHandle& handle);
 
-        Resources::RenderQueueHandle CreateRenderQueue();
+        Resources::RenderQueueHandle CreateRenderQueue(const Resources::RenderQueueDescriptor& descriptor);
         Resources::RenderQueueData GetRenderQueueData(const Resources::RenderQueueHandle& handle);
 
         void SubmitSubmission(const Resources::RenderQueueHandle& handle, const Resources::SubmissionHandle& submission);
+        void CommitQueue(const Resources::RenderQueueHandle& handle);
         void DeleteQueue(const Resources::RenderQueueHandle& handle);
 
         Resources::RenderPassHandle CreateRenderPass(const Resources::RenderPassDescriptor& descriptor);
         Resources::RenderPassData GetRenderPassData(const Resources::RenderPassHandle& handle);
 
-        void SubmitRenderQueue(const Resources::RenderPassHandle& handle, const Resources::RenderQueueHandle& queue);
-        void SubmitRenderPass(const Resources::RenderPassHandle& handle);
         void DeleteRenderPass(const Resources::RenderPassHandle& handle);
 
-        template <RendererAttribute A>
-        const RendererAttributeType<A>::Type& Get() const;
-
-        template <RendererAttribute A>
-        void Set(const RendererAttributeType<A>::Type& value);
+        const RendererVSyncMode& GetVSyncMode() const;
+        void SetVSyncMode(RendererVSyncMode mode);
 
     private:
         friend class CommandBuffer;
@@ -138,7 +111,6 @@ namespace Systems
         RendererContext& mContext;
         RendererWindow& mWindow;
 
-        RendererClearColour mClearColour;
         RendererVSyncMode mVSyncMode;
 
         ResourceRegistry<Resources::SubmissionData> mSubmissions;

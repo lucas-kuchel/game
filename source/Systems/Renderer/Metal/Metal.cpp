@@ -10,7 +10,7 @@ namespace Systems
     {
     };
 
-    RendererBackendImplementation<RendererBackend::Metal>::RendererBackendImplementation(const RendererBackendDescriptor& descriptor)
+    RendererBackendImplementation<RendererBackend::Metal>::RendererBackendImplementation(RendererBackendDescriptor& descriptor)
         : mSubmissions(descriptor.Submissions), mRasterPipelines(descriptor.RasterPipelines), mBuffers(descriptor.Buffers),
           mWindow(descriptor.Window), mCocoaWindowLayer(mWindow.CreateInteractionLayer<WindowInteractive::CocoaBackend>())
     {
@@ -56,45 +56,31 @@ namespace Systems
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderQueue(Resources::RenderQueueData& data)
+    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderQueue(Resources::RenderQueueData&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::AppendToQueue(Resources::RenderQueueData& data, Resources::SubmissionData& submissionData)
+    void RendererBackendImplementation<RendererBackend::Metal>::SubmitSubmission(Resources::RenderQueueData&, Resources::SubmissionData&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::SubmitQueue(Resources::RenderQueueData& data)
+    void RendererBackendImplementation<RendererBackend::Metal>::CommitQueue(Resources::RenderQueueData&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::DeleteQueue(Resources::RenderQueueData& data)
+    void RendererBackendImplementation<RendererBackend::Metal>::DeleteQueue(Resources::RenderQueueData&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderPass(Resources::RenderPassData& data)
+    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderPass(Resources::RenderPassData&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderQueue(Resources::RenderPassData& data, Resources::RenderQueueData& queueData)
+    void RendererBackendImplementation<RendererBackend::Metal>::DeleteRenderPass(Resources::RenderPassData&)
     {
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderPass(const Resources::RenderPassHandle& handle)
-    {
-    }
-
-    void RendererBackendImplementation<RendererBackend::Metal>::DeleteRenderPass(Resources::RenderPassData& data)
-    {
-    }
-
-    template <>
-    void RendererBackendImplementation<RendererBackend::Metal>::Set<RendererAttribute::VSyncMode>(const RendererVSyncMode&)
-    {
-    }
-
-    template <>
-    void RendererBackendImplementation<RendererBackend::Metal>::Set<RendererAttribute::ClearColour>(const RendererClearColour&)
+    void RendererBackendImplementation<RendererBackend::Metal>::SetVSyncMode(RendererVSyncMode)
     {
     }
 }

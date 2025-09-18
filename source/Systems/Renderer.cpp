@@ -1,17 +1,15 @@
 #include <Systems/Renderer.hpp>
 
+#include <Systems/Renderer/DirectX12.hpp>
 #include <Systems/Renderer/Metal.hpp>
-#include <Systems/Renderer/OpenGL.hpp>
 #include <Systems/Renderer/Vulkan.hpp>
 
 namespace Systems
 {
     Renderer::Renderer(const RendererDescriptor& descriptor)
-        : mContext(descriptor.Context), mWindow(descriptor.Window), mClearColour(descriptor.ClearColour),
+        : mContext(descriptor.Context), mWindow(descriptor.Window),
           mVSyncMode(descriptor.VSyncMode), mBackend(CreateBackend(descriptor))
     {
-        std::visit([this](auto& backend)
-                   { backend->template Set<RendererAttribute::ClearColour>(mClearColour); }, mBackend);
     }
 
     Renderer::~Renderer()
@@ -26,18 +24,10 @@ namespace Systems
 
     void Renderer::Present()
     {
-        if (mClearColourDirty)
-        {
-            std::visit([this](auto& backend)
-                       { backend->template Set<RendererAttribute::ClearColour>(mClearColour); }, mBackend);
-
-            mClearColourDirty = false;
-        }
-
         if (mVSyncModeDirty)
         {
             std::visit([this](auto& backend)
-                       { backend->template Set<RendererAttribute::VSyncMode>(mVSyncMode); }, mBackend);
+                       { backend->SetVSyncMode(mVSyncMode); }, mBackend);
 
             mVSyncModeDirty = false;
         }
@@ -46,29 +36,14 @@ namespace Systems
                    { backend->Present(); }, mBackend);
     }
 
-    template <>
-    const RendererAttributeType<RendererAttribute::ClearColour>::Type& Renderer::Get<RendererAttribute::ClearColour>() const
-    {
-        return mClearColour;
-    }
-
-    template <>
-    const RendererAttributeType<RendererAttribute::VSyncMode>::Type& Renderer::Get<RendererAttribute::VSyncMode>() const
+    const RendererVSyncMode& Renderer::GetVSyncMode() const
     {
         return mVSyncMode;
     }
 
-    template <>
-    void Renderer::Set<RendererAttribute::ClearColour>(const RendererClearColour& value)
+    void Renderer::SetVSyncMode(RendererVSyncMode mode)
     {
-        mClearColour = value;
-        mClearColourDirty = true;
-    }
-
-    template <>
-    void Renderer::Set<RendererAttribute::VSyncMode>(const RendererVSyncMode& value)
-    {
-        mVSyncMode = value;
+        mVSyncMode = mode;
         mVSyncModeDirty = true;
     }
 
@@ -79,15 +54,14 @@ namespace Systems
             .RasterPipelines = mRasterPipelines,
             .Buffers = mBuffers,
             .Window = descriptor.Window,
-            .ClearColour = descriptor.ClearColour,
             .VSyncMode = descriptor.VSyncMode,
         };
 
         switch (descriptor.Context.Get<ContextAttribute::Renderer>())
         {
-            case RendererBackend::OpenGL:
+            case RendererBackend::DirectX12:
             {
-                return std::make_unique<RendererBackendImplementation<RendererBackend::OpenGL>>(backendDescriptor);
+                return std::make_unique<RendererBackendImplementation<RendererBackend::DirectX12>>(backendDescriptor);
             }
             case RendererBackend::Vulkan:
             {

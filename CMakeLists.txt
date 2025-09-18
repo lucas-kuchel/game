@@ -9,13 +9,16 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(spirv_cross_core CONFIG REQUIRED)
-find_package(spirv_cross_glsl CONFIG REQUIRED)
 
 if (APPLE)
     find_library(METAL_FRAMEWORK Metal)
     find_library(QUARTZCORE_FRAMEWORK QuartzCore)
     find_package(spirv_cross_msl CONFIG REQUIRED)
     file(GLOB_RECURSE MM_SOURCES "source/*.mm")
+endif()
+
+if (WIN32)
+    find_package(spirv_cross_hlsl CONFIG REQUIRED)
 endif()
   
 add_executable(game)
@@ -27,16 +30,18 @@ target_compile_options(game PRIVATE
 
 target_link_libraries(game PRIVATE 
     glfw
-    GLEW::GLEW
     Vulkan::Headers
     glm::glm
     spirv-cross-core
-    spirv-cross-glsl
 )
 
 if(APPLE)
     target_sources(game PRIVATE ${MM_SOURCES})
     target_link_libraries(game PRIVATE ${METAL_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} spirv-cross-msl)
+endif()
+
+if (WIN32)
+    target_link_libraries(game PRIVATE spirv-cross-hlsl)
 endif()
 
 target_sources(game PRIVATE ${CPP_SOURCES})
