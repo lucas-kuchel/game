@@ -11,7 +11,7 @@
 #include <Resources/RenderQueue.hpp>
 #include <Resources/Submissions.hpp>
 
-#include <memory>
+#include <vulkan/vulkan.h>
 
 namespace Systems
 {
@@ -58,9 +58,13 @@ namespace Systems
         void SetVSyncMode(RendererVSyncMode mode);
 
     private:
-        struct Internals;
+        struct Internals
+        {
+            VkInstance Instance;
+            VkPhysicalDevice PhysicalDevice;
+        };
 
-        std::unique_ptr<Internals> mInternals;
+        Internals mInternals;
 
         ResourceRegistry<Resources::SubmissionData>& mSubmissions;
         ResourceRegistry<Resources::RasterPipelineData>& mRasterPipelines;
@@ -69,9 +73,8 @@ namespace Systems
         RendererWindow& mWindow;
 
         WindowInteractionLayer<WindowInteractive::Vulkan> mVulkanWindowLayer;
-    };
 
-    struct RendererBackendImplementation<RendererBackend::Vulkan>::Internals
-    {
+        void CreateInstance();
+        void SelectPhysicalDevice();
     };
 }

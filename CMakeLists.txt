@@ -4,22 +4,10 @@ project(game LANGUAGES CXX)
 
 file(GLOB_RECURSE CPP_SOURCES "source/*.cpp")
 
-find_package(VulkanHeaders CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(spirv_cross_core CONFIG REQUIRED)
-
-if (APPLE)
-    find_library(METAL_FRAMEWORK Metal)
-    find_library(QUARTZCORE_FRAMEWORK QuartzCore)
-    find_package(spirv_cross_msl CONFIG REQUIRED)
-    file(GLOB_RECURSE MM_SOURCES "source/*.mm")
-endif()
-
-if (WIN32)
-    find_package(spirv_cross_hlsl CONFIG REQUIRED)
-endif()
   
 add_executable(game)
 
@@ -30,18 +18,28 @@ target_compile_options(game PRIVATE
 
 target_link_libraries(game PRIVATE 
     glfw
-    Vulkan::Headers
     glm::glm
     spirv-cross-core
 )
 
 if(APPLE)
+find_library(METAL_FRAMEWORK Metal)
+    find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+    find_package(spirv_cross_msl CONFIG REQUIRED)
+    file(GLOB_RECURSE MM_SOURCES "source/*.mm")
     target_sources(game PRIVATE ${MM_SOURCES})
     target_link_libraries(game PRIVATE ${METAL_FRAMEWORK} ${QUARTZCORE_FRAMEWORK} spirv-cross-msl)
 endif()
 
 if (WIN32)
+find_package(spirv_cross_hlsl CONFIG REQUIRED)
     target_link_libraries(game PRIVATE spirv-cross-hlsl)
+endif()
+
+if(NOT APPLE)
+find_package(VulkanHeaders CONFIG REQUIRED)
+    find_package(Vulkan REQUIRED)
+    target_link_libraries(game PRIVATE Vulkan::Vulkan Vulkan::Headers)
 endif()
 
 target_sources(game PRIVATE ${CPP_SOURCES})

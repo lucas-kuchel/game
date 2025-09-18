@@ -264,7 +264,7 @@ namespace Systems
     class WindowInteractionLayer<WindowInteractive::Vulkan>
     {
     public:
-        std::vector<std::string_view> GetRequiredInstanceExtensions();
+        const char** GetRequiredInstanceExtensions(std::uint32_t* count);
         VkSurfaceKHR CreateWindowSurface(VkInstance instance, const VkAllocationCallbacks* allocator = nullptr);
 
     private:

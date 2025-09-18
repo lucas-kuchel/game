@@ -419,13 +419,19 @@ namespace Systems
         mShownDirty = true;
     }
 
-    std::vector<std::string_view> WindowInteractionLayer<WindowInteractive::Vulkan>::GetRequiredInstanceExtensions()
+    const char** WindowInteractionLayer<WindowInteractive::Vulkan>::GetRequiredInstanceExtensions(std::uint32_t* count)
     {
-        std::uint32_t count = 0;
+        if (count == nullptr)
+        {
+            throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT,
+                                   "std::vector<std::string_view> Systems::WindowInteractionLayer<WindowInteractive::Vulkan>::GetRequiredInstanceExtensions():\n"
+                                   "general error\n"
+                                   "'count' parameter must not be nullptr");
+        }
 
-        const char** extensions = glfwGetRequiredInstanceExtensions(&count);
+        const char** extensions = glfwGetRequiredInstanceExtensions(count);
 
-        if (extensions == nullptr || count == 0)
+        if (extensions == nullptr || *count == 0)
         {
             throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
                                    "std::vector<std::string_view> Systems::WindowInteractionLayer<WindowInteractive::Vulkan>::GetRequiredInstanceExtensions():\n"
@@ -434,7 +440,7 @@ namespace Systems
                                    "no extensions may be available");
         }
 
-        return {extensions, extensions + count};
+        return extensions;
     }
 
     VkSurfaceKHR WindowInteractionLayer<WindowInteractive::Vulkan>::CreateWindowSurface(VkInstance instance, const VkAllocationCallbacks* allocator)
