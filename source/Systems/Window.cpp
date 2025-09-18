@@ -248,9 +248,9 @@ namespace Systems
     }
 
     Window::Window(const WindowDescriptor& descriptor)
-        : mContext(descriptor.Context), mTitle(descriptor.Title), mSize(descriptor.Size)
+        : mContext(descriptor.Context), mTitle(descriptor.Title), mSize(descriptor.Size), mVisibility(descriptor.Visibility), mShown(descriptor.Shown)
     {
-        const RendererBackend& rendererBackend = descriptor.Context.get().template Get<ContextAttribute::Renderer>();
+        const RendererBackend& rendererBackend = descriptor.Context.Get<ContextAttribute::Renderer>();
 
         switch (rendererBackend)
         {
@@ -271,26 +271,62 @@ namespace Systems
                                                                     "check window arguments");
         }
 
-        glfwSetKeyCallback(static_cast<GLFWwindow*>(mHandle), KeyCallback);
-        glfwSetMouseButtonCallback(static_cast<GLFWwindow*>(mHandle), MouseCallback);
-        glfwSetCursorPosCallback(static_cast<GLFWwindow*>(mHandle), CursorCallback);
-        glfwSetScrollCallback(static_cast<GLFWwindow*>(mHandle), ScrollCallback);
+        glfwSetWindowUserPointer(mHandle, this);
 
-        mStatus = WindowStatus::Active;
+        glfwSetWindowSizeCallback(mHandle, SizeCallback);
+        glfwSetWindowCloseCallback(mHandle, CloseCallback);
+        glfwSetWindowFocusCallback(mHandle, FocusCallback);
+        glfwSetWindowIconifyCallback(mHandle, IconifyCallback);
+        glfwSetKeyCallback(mHandle, KeyCallback);
+        glfwSetMouseButtonCallback(mHandle, MouseButtonCallback);
+        glfwSetCursorPosCallback(mHandle, MousePositionCallback);
+        glfwSetScrollCallback(mHandle, MouseScrollCallback);
+        glfwSetCharCallback(mHandle, CharCallback);
+
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+        switch (mVisibility)
+        {
+            case WindowVisibility::Fullscreen:
+                glfwSetWindowMonitor(mHandle, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+                break;
+            case WindowVisibility::Iconified:
+                glfwIconifyWindow(mHandle);
+                break;
+            default:
+                std::int32_t monitorX = 0;
+                std::int32_t monitorY = 0;
+                glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+                std::int32_t xpos = monitorX + (mode->width - static_cast<int>(mSize.x)) / 2;
+                std::int32_t ypos = monitorY + (mode->height - static_cast<int>(mSize.y)) / 2;
+                glfwSetWindowMonitor(mHandle, nullptr, xpos, ypos, mSize.x, mSize.y, 0);
+                break;
+        }
+
+        if (mShown)
+        {
+            glfwShowWindow(mHandle);
+        }
+        else
+        {
+            glfwHideWindow(mHandle);
+        }
     }
 
     Window::~Window()
     {
-        InputState* inputState = static_cast<InputState*>(glfwGetWindowUserPointer(static_cast<GLFWwindow*>(mHandle)));
-
-        delete inputState;
-
         glfwDestroyWindow(static_cast<GLFWwindow*>(mHandle));
 
         mHandle = nullptr;
     }
 
-    void Window::ManageEvents()
+    std::queue<WindowEvent>& Window::QueryEvents()
+    {
+        return mEventQueue;
+    }
+
+    void Window::Update()
     {
         if (mSizeDirty)
         {
@@ -298,103 +334,52 @@ namespace Systems
 
             mSizeDirty = false;
         }
-        else
-        {
-            glm::ivec2 size;
-
-            glfwGetWindowSize(static_cast<GLFWwindow*>(mHandle), &size[0], &size[1]);
-
-            mSize = size;
-        }
 
         if (mTitleDirty)
         {
             glfwSetWindowTitle(static_cast<GLFWwindow*>(mHandle), mTitle.c_str());
+
+            mTitleDirty = false;
         }
 
-        if (mStatusDirty)
+        if (mVisibilityDirty)
         {
-            bool should = false;
+            GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
-            if (mStatus == WindowStatus::Inactive)
+            switch (mVisibility)
             {
-                should = true;
+                case WindowVisibility::Fullscreen:
+                    glfwSetWindowMonitor(mHandle, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+                    break;
+                case WindowVisibility::Iconified:
+                    glfwIconifyWindow(mHandle);
+                    break;
+                default:
+                    std::int32_t monitorX = 0;
+                    std::int32_t monitorY = 0;
+                    glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+                    std::int32_t xpos = monitorX + (mode->width - static_cast<int>(mSize.x)) / 2;
+                    std::int32_t ypos = monitorY + (mode->height - static_cast<int>(mSize.y)) / 2;
+                    glfwSetWindowMonitor(mHandle, nullptr, xpos, ypos, mSize.x, mSize.y, 0);
+                    break;
             }
 
-            glfwSetWindowShouldClose(static_cast<GLFWwindow*>(mHandle), should);
+            mVisibilityDirty = false;
         }
-        else
-        {
-            bool should = glfwWindowShouldClose(static_cast<GLFWwindow*>(mHandle));
 
-            if (should)
+        if (mShownDirty)
+        {
+            if (mShown)
             {
-                mStatus = WindowStatus::Inactive;
+                glfwShowWindow(mHandle);
             }
             else
             {
-                mStatus = WindowStatus::Active;
+                glfwHideWindow(mHandle);
             }
-        }
 
-        auto* state = static_cast<InputState*>(glfwGetWindowUserPointer(static_cast<GLFWwindow*>(mHandle)));
-
-        for (size_t i = 0; i < state->Keys.size(); i++)
-        {
-            bool down = state->KeysDown[i];
-            PressableState previous = state->Keys[i];
-
-            if (down)
-            {
-                if (previous == PressableState::None || previous == PressableState::Released)
-                {
-                    state->Keys[i] = PressableState::Pressed;
-                }
-                else
-                {
-                    state->Keys[i] = PressableState::Held;
-                }
-            }
-            else
-            {
-                if (previous == PressableState::Pressed || previous == PressableState::Held)
-                {
-                    state->Keys[i] = PressableState::Released;
-                }
-                else
-                {
-                    state->Keys[i] = PressableState::None;
-                }
-            }
-        }
-
-        for (size_t i = 0; i < state->Buttons.size(); i++)
-        {
-            bool down = state->ButtonsDown[i];
-            PressableState previous = state->Buttons[i];
-
-            if (down)
-            {
-                if (previous == PressableState::None || previous == PressableState::Released)
-                {
-                    state->Buttons[i] = PressableState::Pressed;
-                }
-                else
-                {
-                    state->Buttons[i] = PressableState::Held;
-                }
-            }
-            else
-            {
-                if (previous == PressableState::Pressed || previous == PressableState::Held)
-                {
-                    state->Buttons[i] = PressableState::Released;
-                }
-                else
-                {
-                    state->Buttons[i] = PressableState::None;
-                }
-            }
+            mShownDirty = false;
         }
     }
 
@@ -411,9 +396,15 @@ namespace Systems
     }
 
     template <>
-    const WindowStatus& Window::Get<WindowAttribute::Status>() const
+    const WindowVisibility& Window::Get<WindowAttribute::Visibility>() const
     {
-        return mStatus;
+        return mVisibility;
+    }
+
+    template <>
+    const bool& Window::Get<WindowAttribute::Shown>() const
+    {
+        return mShown;
     }
 
     template <>
@@ -431,10 +422,17 @@ namespace Systems
     }
 
     template <>
-    void Window::Set<WindowAttribute::Status>(const WindowStatus& value)
+    void Window::Set<WindowAttribute::Visibility>(const WindowVisibility& value)
     {
-        mStatus = value;
-        mStatusDirty = true;
+        mVisibility = value;
+        mVisibilityDirty = true;
+    }
+
+    template <>
+    void Window::Set<WindowAttribute::Shown>(const bool& value)
+    {
+        mShown = value;
+        mShownDirty = true;
     }
 
     void Window::InitialiseHintsOpenGL()
@@ -519,74 +517,6 @@ namespace Systems
                                "\t- macOS");
     }
 
-    WindowInteractionLayer<WindowInteractive::KeyboardInputs>::WindowInteractionLayer(void* handle)
-        : mHandle(handle)
-    {
-        mState = &static_cast<Window*>(glfwGetWindowUserPointer(static_cast<GLFWwindow*>(mHandle)))->mInputState;
-
-        if (!mState)
-        {
-            throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
-                                   "Systems::WindowInteractionLayer<WindowInteractive::KeyboardInputs>::WindowInteractionLayer(void*):\n"
-                                   "general error\n"
-                                   "no input state found in window");
-        }
-    }
-
-    PressableState WindowInteractionLayer<WindowInteractive::KeyboardInputs>::GetKeyState(Key key) const
-    {
-        return mState->Keys[static_cast<size_t>(key)];
-    }
-
-    WindowInteractionLayer<WindowInteractive::MouseInputs>::WindowInteractionLayer(void* handle)
-        : mHandle(handle)
-    {
-        mState = &static_cast<Window*>(glfwGetWindowUserPointer(static_cast<GLFWwindow*>(mHandle)))->mInputState;
-
-        if (!mState)
-        {
-            throw Debug::Exception(Debug::ErrorCode::GENERAL_ERROR,
-                                   "Systems::WindowInteractionLayer<WindowInteractive::MouseInputs>::WindowInteractionLayer(void*):\n"
-                                   "general error\n"
-                                   "no input state found in window");
-        }
-    }
-
-    PressableState WindowInteractionLayer<WindowInteractive::MouseInputs>::GetButtonState(MouseButton button) const
-    {
-        return mState->Buttons[static_cast<size_t>(button)];
-    }
-
-    ScrollState WindowInteractionLayer<WindowInteractive::MouseInputs>::GetScrollState() const
-    {
-        return mState->Scroll;
-    }
-
-    CursorState WindowInteractionLayer<WindowInteractive::MouseInputs>::GetCursorState() const
-    {
-        return mState->Cursor;
-    }
-
-    void WindowInteractionLayer<WindowInteractive::MouseInputs>::SetCursorState(const CursorState& state)
-    {
-        mState->Cursor = state;
-
-        if (state.Mode == CursorMode::Disabled)
-        {
-            glfwSetInputMode(static_cast<GLFWwindow*>(mHandle), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        }
-        else if (state.Mode == CursorMode::Hidden)
-        {
-            glfwSetInputMode(static_cast<GLFWwindow*>(mHandle), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-        }
-        else if (state.Mode == CursorMode::Normal)
-        {
-            glfwSetInputMode(static_cast<GLFWwindow*>(mHandle), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-
-        glfwSetCursorPos(static_cast<GLFWwindow*>(mHandle), state.Position[0], state.Position[1]);
-    }
-
     void Window::SizeCallback(GLFWwindow* window, int width, int height)
     {
         auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
@@ -598,12 +528,12 @@ namespace Systems
 
         WindowEvent event;
 
-        event.Type = WindowEventType::Resized;
+        event.Type = WindowEventType::WindowResize;
 
-        event.ResizeInfo.Size = {width, height};
+        event.ResizeInteraction.Size = {width, height};
 
-        self->mSize = event.ResizeInfo.Size;
-        self->mEvents.push(event);
+        self->mSize = event.ResizeInteraction.Size;
+        self->mEventQueue.push(event);
     }
 
     void Window::CloseCallback(GLFWwindow* window)
@@ -617,9 +547,9 @@ namespace Systems
 
         WindowEvent event;
 
-        event.Type = WindowEventType::Closed;
+        event.Type = WindowEventType::WindowClose;
 
-        self->mEvents.push(event);
+        self->mEventQueue.push(event);
     }
 
     void Window::FocusCallback(GLFWwindow* window, int focused)
@@ -633,9 +563,10 @@ namespace Systems
 
         WindowEvent event;
 
-        event.Type = focused ? WindowEventType::Focused : WindowEventType::Unfocused;
+        event.Type = WindowEventType::WindowFocus;
+        event.FocusInteraction.Focused = focused;
 
-        self->mEvents.push(event);
+        self->mEventQueue.push(event);
     }
 
     void Window::IconifyCallback(GLFWwindow* window, int iconified)
@@ -649,9 +580,10 @@ namespace Systems
 
         WindowEvent event;
 
-        event.Type = iconified ? WindowEventType::Iconified : WindowEventType::Restored;
+        event.Type = WindowEventType::WindowVisibility;
+        event.VisibilityInteraction.Visibility = iconified ? WindowVisibility::Iconified : WindowVisibility::Windowed;
 
-        self->mEvents.push(event);
+        self->mEventQueue.push(event);
         self->mVisibility = iconified ? WindowVisibility::Iconified : WindowVisibility::Windowed;
     }
 
@@ -659,25 +591,24 @@ namespace Systems
     {
         auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
 
-        if (!self)
+        if (!self || action != GLFW_PRESS && action != GLFW_RELEASE)
         {
             return;
         }
 
-        if (action != GLFW_PRESS && action != GLFW_RELEASE)
-        {
-            return;
-        }
+        WindowEvent keyEvent;
+        WindowEvent scancodeEvent;
 
-        WindowEvent event;
+        keyEvent.Type = WindowEventType::KeyInput;
+        keyEvent.KeyInput.Input = MapKey(key);
+        scancodeEvent.ScancodeInput.State = action == GLFW_PRESS ? PressableStatus::Pressed : PressableStatus::Released;
 
-        event.KeyInfo.Keycode = MapKey(key);
+        scancodeEvent.Type = WindowEventType::ScancodeInput;
+        scancodeEvent.ScancodeInput.Scancode = scancode;
+        scancodeEvent.ScancodeInput.State = action == GLFW_PRESS ? PressableStatus::Pressed : PressableStatus::Released;
 
-        event.Type = action == GLFW_PRESS ? WindowEventType::KeyPressed : WindowEventType::KeyReleased;
-        event.KeyInfo.Scancode = scancode;
-        event.KeyInfo.Modifiers = mods;
-
-        self->mEvents.push(event);
+        self->mEventQueue.push(keyEvent);
+        self->mEventQueue.push(scancodeEvent);
     }
 
     void Window::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
@@ -696,11 +627,11 @@ namespace Systems
 
         WindowEvent event;
 
-        event.MouseButtonInfo.Button = MapButton(button);
-        event.Type = action == GLFW_PRESS ? WindowEventType::MouseButtonPressed : WindowEventType::MouseButtonReleased;
-        event.MouseButtonInfo.Modifiers = mods;
+        event.Type = WindowEventType::MouseButton;
+        event.MouseButtonInput.Button = MapButton(button);
+        event.MouseButtonInput.State = action == GLFW_PRESS ? PressableStatus::Pressed : PressableStatus::Released;
 
-        self->mEvents.push(event);
+        self->mEventQueue.push(event);
     }
 
     void Window::MousePositionCallback(GLFWwindow* window, double x, double y)
@@ -714,12 +645,10 @@ namespace Systems
 
         WindowEvent event;
 
-        event.Type = WindowEventType::MouseMoved;
-        event.MouseMoveInfo.Delta = glm::dvec2(x, y) - self->mLastMousePosition;
-        event.MouseMoveInfo.Position = {x, y};
+        event.Type = WindowEventType::MouseMove;
+        event.MousePositionInput.Position = {x, y};
 
-        self->mLastMousePosition = {x, y};
-        self->mEvents.push(event);
+        self->mEventQueue.push(event);
     }
 
     void Window::MouseScrollCallback(GLFWwindow* window, double x, double y)
@@ -732,12 +661,27 @@ namespace Systems
         }
 
         WindowEvent event;
-        event.Type = WindowEventType::MouseScrolled;
 
-        event.MouseScrollInfo.Delta = {x, y};
-        self->mAccumulatedMouseScroll += event.MouseScrollInfo.Delta;
-        event.MouseScrollInfo.Scroll = self->mAccumulatedMouseScroll;
+        event.Type = WindowEventType::MouseScroll;
+        event.MouseScrollInput.Offsets = {x, y};
 
-        self->mEvents.push(event);
+        self->mEventQueue.push(event);
+    }
+
+    void Window::CharCallback(GLFWwindow* window, std::uint32_t codepoint)
+    {
+        auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+        if (!self)
+        {
+            return;
+        }
+
+        WindowEvent event;
+
+        event.Type = WindowEventType::CharInput;
+        event.CharInput.Codepoint = codepoint;
+
+        self->mEventQueue.push(event);
     }
 }

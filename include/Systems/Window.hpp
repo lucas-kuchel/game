@@ -3,7 +3,6 @@
 #include <Debug/Exception.hpp>
 #include <Systems/Context.hpp>
 
-#include <functional>
 #include <queue>
 #include <string>
 #include <string_view>
@@ -38,15 +37,8 @@ namespace Systems
     {
         Title,
         Size,
-        Status,
         Visibility,
-
-    };
-
-    enum class WindowStatus
-    {
-        Active,
-        Inactive,
+        Shown,
     };
 
     enum class WindowInteractive
@@ -55,9 +47,6 @@ namespace Systems
         Vulkan,
 
         CocoaBackend,
-
-        KeyboardInputs,
-        MouseInputs,
     };
 
     enum class Key
@@ -181,12 +170,14 @@ namespace Systems
 
     enum class WindowEventType
     {
-        Key,
-        Scancode,
-        Char,
+        KeyInput,
+        ScancodeInput,
+        CharInput,
+
         MouseButton,
         MouseMove,
-        Scroll,
+        MouseScroll,
+
         WindowResize,
         WindowFocus,
         WindowVisibility,
@@ -195,7 +186,7 @@ namespace Systems
 
     struct KeyEvent
     {
-        Key Key;
+        Key Input;
         PressableStatus State;
     };
 
@@ -207,7 +198,7 @@ namespace Systems
 
     struct CharEvent
     {
-        char32_t Codepoint;
+        std::uint32_t Codepoint;
     };
 
     struct MouseButtonEvent
@@ -330,17 +321,26 @@ namespace Systems
     };
 
     template <>
-    struct WindowAttributeType<WindowAttribute::Status>
+    struct WindowAttributeType<WindowAttribute::Visibility>
     {
-        using Type = WindowStatus;
+        using Type = WindowVisibility;
+    };
+
+    template <>
+    struct WindowAttributeType<WindowAttribute::Shown>
+    {
+        using Type = bool;
     };
 
     struct WindowDescriptor
     {
-        std::reference_wrapper<WindowContext> Context;
+        WindowContext& Context;
 
         WindowTitle Title = "New Window";
         WindowSize Size = {640u, 480u};
+        WindowVisibility Visibility = WindowVisibility::Windowed;
+
+        bool Shown = true;
     };
 
     class Window
@@ -350,6 +350,8 @@ namespace Systems
         ~Window();
 
         std::queue<WindowEvent>& QueryEvents();
+
+        void Update();
 
         template <WindowAttribute A>
         const WindowAttributeType<A>::Type& Get() const;
@@ -409,11 +411,13 @@ namespace Systems
 
         WindowTitle mTitle;
         WindowSize mSize;
-        WindowStatus mStatus = WindowStatus::Inactive;
+        WindowVisibility mVisibility;
+        bool mShown;
 
         bool mTitleDirty = false;
         bool mSizeDirty = false;
-        bool mStatusDirty = false;
+        bool mVisibilityDirty = false;
+        bool mShownDirty = false;
 
         GLFWwindow* mHandle = nullptr;
 
@@ -427,6 +431,7 @@ namespace Systems
         static void FocusCallback(GLFWwindow* window, int focused);
         static void IconifyCallback(GLFWwindow* window, int iconified);
         static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+        static void CharCallback(GLFWwindow* window, std::uint32_t character);
         static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
         static void MousePositionCallback(GLFWwindow* window, double x, double y);
         static void MouseScrollCallback(GLFWwindow* window, double x, double y);

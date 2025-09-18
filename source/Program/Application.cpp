@@ -19,14 +19,33 @@ namespace Program
     void Application::Update()
     {
         mContext.Update();
-        mWindow.ManageEvents();
+
+        auto& events = mWindow.QueryEvents();
+
+        while (!events.empty())
+        {
+            auto& event = events.front();
+
+            switch (event.Type)
+            {
+                case Systems::WindowEventType::WindowClose:
+                    mRunning = false;
+                default:
+                    break;
+            }
+
+            events.pop();
+        }
+
+        mWindow.Update();
+
         mRenderer.Clear();
         mRenderer.Present();
     }
 
     bool Application::ShouldUpdate() const
     {
-        return mWindow.Get<Systems::WindowAttribute::Status>() == Systems::WindowStatus::Active;
+        return mRunning;
     }
 
     Systems::ContextDescriptor Application::CreateContext()
@@ -42,6 +61,8 @@ namespace Program
             .Context = mContext,
             .Title = "New Window",
             .Size = {800u, 600u},
+            .Shown = true,
+            .Visibility = Systems::WindowVisibility::Windowed,
         };
     }
 

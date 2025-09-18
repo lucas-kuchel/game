@@ -25,5 +25,7 @@ namespace Program
         Systems::ContextDescriptor CreateContext();
         Systems::WindowDescriptor CreateWindow();
         Systems::RendererDescriptor CreateRenderer();
+
+        bool mRunning = true;
     };
 }
