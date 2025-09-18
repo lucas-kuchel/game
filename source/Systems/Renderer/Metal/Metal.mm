@@ -49,6 +49,16 @@ namespace Systems
         MTLIndexType IndexType;
     };
 
+    struct MetalRenderQueueData
+    {
+        id<MTLCommandBuffer> CommandBuffer;
+    };
+
+    struct MetalRenderPassData
+    {
+        MTLRenderPassDescriptor* RenderPass;
+    };
+
     struct MetalAttributeTypeInfo
     {
         MTLVertexFormat Format;
@@ -765,6 +775,110 @@ namespace Systems
     void RendererBackendImplementation<RendererBackend::Metal>::DeleteSubmission(Resources::SubmissionData& data)
     {
         auto* info = static_cast<MetalSubmissionData*>(data.BackendMetadata);
+
+        delete info;
+
+        data.BackendMetadata = nullptr;
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderQueue(Resources::RenderQueueData& data)
+    {
+        data.BackendMetadata = new MetalRenderQueueData();
+
+        auto& info = *static_cast<MetalRenderQueueData*>(data.BackendMetadata);
+
+        info.CommandBuffer = [mInternals->CommandQueue commandBuffer];
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::SubmitSubmission(Resources::RenderQueueData& data, Resources::SubmissionData& submissionData)
+    {
+        auto& info = *static_cast<MetalRenderQueueData*>(data.BackendMetadata);
+        auto& submissionInfo = *static_cast<MetalSubmissionData*>(submissionData.BackendMetadata);
+
+        // this function should only perform encoding into buffer from submission info
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::DeleteQueue(Resources::RenderQueueData& data)
+    {
+        auto* info = static_cast<MetalRenderQueueData*>(data.BackendMetadata);
+
+        [info->CommandBuffer release];
+
+        delete info;
+
+        data.BackendMetadata = nullptr;
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderPass(Resources::RenderPassData& data)
+    {
+        data.BackendMetadata = new MetalRenderPassData();
+
+        auto& info = *static_cast<MetalRenderPassData*>(data.BackendMetadata);
+
+        info.RenderPass = [MTLRenderPassDescriptor renderPassDescriptor];
+
+        info.RenderPass.colorAttachments[0].texture = [mInternals->CurrentDrawable texture];
+        info.RenderPass.colorAttachments[0].loadAction = MTLLoadActionLoad;
+        info.RenderPass.colorAttachments[0].storeAction = MTLStoreActionStore;
+
+        info.RenderPass.depthAttachment.texture = mInternals->DepthTexture;
+        info.RenderPass.depthAttachment.loadAction = MTLLoadActionLoad;
+        info.RenderPass.depthAttachment.storeAction = MTLStoreActionDontCare;
+
+        info.RenderPass = info.RenderPass;
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderQueue(Resources::RenderPassData& data, Resources::RenderQueueData& queueData)
+    {
+        // this function should only commit the buffer to the render pass
+
+        auto& passInfo = *static_cast<MetalRenderPassData*>(data.BackendMetadata);
+        auto& queueInfo = *static_cast<MetalRenderQueueData*>(queueData.BackendMetadata);
+
+        id<MTLRenderCommandEncoder> encoder = [queueInfo.CommandBuffer renderCommandEncoderWithDescriptor:passInfo.RenderPass];
+
+        for (auto& submission : queueData.Submissions)
+        {
+            auto& submissionData = mSubmissions.Data.Get(submission.ID);
+            auto& pipelineData = mRasterPipelines.Data.Get(submissionData.Pipeline.ID);
+            auto& submissionInfo = *static_cast<MetalSubmissionData*>(submissionData.BackendMetadata);
+            auto& pipelineInfo = *static_cast<MetalPipelineData*>(pipelineData.BackendMetadata);
+
+            [encoder setRenderPipelineState:pipelineInfo.State];
+            [encoder setDepthStencilState:pipelineInfo.DepthStencilState];
+            [encoder setCullMode:pipelineInfo.CullMode];
+            [encoder setFrontFacingWinding:pipelineInfo.CullWinding];
+            [encoder setTriangleFillMode:pipelineInfo.FillMode];
+
+            for (size_t i = 0; i < submissionData.VertexBuffers.size(); i++)
+            {
+                auto& bufferData = mBuffers.Data.Get(submissionData.VertexBuffers[i].ID);
+                auto& bufferInfo = *static_cast<MetalBufferData*>(bufferData.BackendMetadata);
+
+                [encoder setVertexBuffer:bufferInfo.Handle offset:0 atIndex:pipelineInfo.VertexBufferBindings[i]];
+            }
+
+            auto& indexBufferData = mBuffers.Data.Get(submissionData.IndexBuffer.ID);
+            auto& indexBufInfo = *static_cast<MetalBufferData*>(indexBufferData.BackendMetadata);
+
+            [encoder drawIndexedPrimitives:pipelineInfo.Primitive
+                                indexCount:submissionInfo.IndexCount
+                                 indexType:submissionInfo.IndexType
+                               indexBuffer:indexBufInfo.Handle
+                         indexBufferOffset:0];
+        }
+
+        [encoder endEncoding];
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderPass(Resources::RenderPassData& data)
+    {
+        // draw render pass
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::DeleteRenderPass(Resources::RenderPassData& data)
+    {
+        auto* info = static_cast<MetalRenderPassData*>(data.BackendMetadata);
 
         delete info;
 

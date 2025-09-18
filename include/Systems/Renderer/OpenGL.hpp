@@ -5,8 +5,10 @@
 
 #include <Types/SparseSet.hpp>
 
-#include <Resources/Buffers.hpp>
+#include <Resources/Buffer.hpp>
 #include <Resources/Pipelines.hpp>
+#include <Resources/Queue.hpp>
+#include <Resources/RenderPass.hpp>
 #include <Resources/Submissions.hpp>
 
 #include <memory>
@@ -88,6 +90,15 @@ namespace Systems
 
         void CreateSubmission(Resources::SubmissionData& data);
         void DeleteSubmission(Resources::SubmissionData& data);
+
+        void CreateRenderQueue(Resources::RenderQueueData& data);
+        void SubmitSubmission(Resources::RenderQueueData& data, Resources::SubmissionData& submissionData);
+        void DeleteQueue(Resources::RenderQueueData& data);
+
+        void CreateRenderPass(Resources::RenderPassData& data);
+        void SubmitRenderQueue(Resources::RenderPassData& data, Resources::RenderQueueData& queueData);
+        void SubmitRenderPass(Resources::RenderPassData& data);
+        void DeleteRenderPass(Resources::RenderPassData& data);
 
         template <RendererAttribute A>
         void Set(const RendererAttributeType<A>::Type& value);

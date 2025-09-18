@@ -3,8 +3,10 @@
 #include <Systems/Context.hpp>
 #include <Systems/Window.hpp>
 
-#include <Resources/Buffers.hpp>
+#include <Resources/Buffer.hpp>
 #include <Resources/Pipelines.hpp>
+#include <Resources/Queue.hpp>
+#include <Resources/RenderPass.hpp>
 #include <Resources/Submissions.hpp>
 
 #include <Types/SparseSet.hpp>
@@ -111,6 +113,19 @@ namespace Systems
 
         void DeleteSubmission(const Resources::SubmissionHandle& handle);
 
+        Resources::RenderQueueHandle CreateRenderQueue();
+        Resources::RenderQueueData GetRenderQueueData(const Resources::RenderQueueHandle& handle);
+
+        void SubmitSubmission(const Resources::RenderQueueHandle& handle, const Resources::SubmissionHandle& submission);
+        void DeleteQueue(const Resources::RenderQueueHandle& handle);
+
+        Resources::RenderPassHandle CreateRenderPass(const Resources::RenderPassDescriptor& descriptor);
+        Resources::RenderPassData GetRenderPassData(const Resources::RenderPassHandle& handle);
+
+        void SubmitRenderQueue(const Resources::RenderPassHandle& handle, const Resources::RenderQueueHandle& queue);
+        void SubmitRenderPass(const Resources::RenderPassHandle& handle);
+        void DeleteRenderPass(const Resources::RenderPassHandle& handle);
+
         template <RendererAttribute A>
         const RendererAttributeType<A>::Type& Get() const;
 
@@ -129,6 +144,8 @@ namespace Systems
         ResourceRegistry<Resources::SubmissionData> mSubmissions;
         ResourceRegistry<Resources::RasterPipelineData> mRasterPipelines;
         ResourceRegistry<Resources::BufferData> mBuffers;
+        ResourceRegistry<Resources::RenderQueueData> mRenderQueues;
+        ResourceRegistry<Resources::RenderPassData> mRenderPasses;
 
         bool mClearColourDirty = false;
         bool mVSyncModeDirty = false;

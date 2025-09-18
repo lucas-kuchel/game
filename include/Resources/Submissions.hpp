@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Resources/Buffers.hpp>
+#include <Resources/Buffer.hpp>
 #include <Resources/Pipelines.hpp>
 
 #include <cstdlib>

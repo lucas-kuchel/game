@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Resources/Buffers.hpp>
+#include <Resources/Buffer.hpp>
 
 #include <cstdlib>
 #include <limits>

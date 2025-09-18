@@ -56,6 +56,38 @@ namespace Systems
     {
     }
 
+    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderQueue(Resources::RenderQueueData& data)
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::AppendToQueue(Resources::RenderQueueData& data, Resources::SubmissionData& submissionData)
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::SubmitQueue(Resources::RenderQueueData& data)
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::DeleteQueue(Resources::RenderQueueData& data)
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::CreateRenderPass(Resources::RenderPassData& data)
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderQueue(Resources::RenderPassData& data, Resources::RenderQueueData& queueData)
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderPass(const Resources::RenderPassHandle& handle)
+    {
+    }
+
+    void RendererBackendImplementation<RendererBackend::Metal>::DeleteRenderPass(Resources::RenderPassData& data)
+    {
+    }
+
     template <>
     void RendererBackendImplementation<RendererBackend::Metal>::Set<RendererAttribute::VSyncMode>(const RendererVSyncMode&)
     {
