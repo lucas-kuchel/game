@@ -51,7 +51,8 @@ namespace Systems
 
     struct MetalRenderQueueData
     {
-        id<MTLCommandBuffer> CommandBuffer;
+        id<MTLCommandBuffer> Buffer;
+        id<MTLRenderCommandEncoder> Encoder;
     };
 
     struct MetalRenderPassData
@@ -70,9 +71,7 @@ namespace Systems
     public:
         id<MTLDevice> Device = nil;
         id<MTLCommandQueue> CommandQueue = nil;
-        id<MTLCommandBuffer> RasterCommandBuffer = nil;
         id<CAMetalDrawable> CurrentDrawable = nil;
-        id<MTLTexture> DepthTexture = nil;
 
         NSUInteger DrawableWidth;
         NSUInteger DrawableHeight;
@@ -480,45 +479,16 @@ namespace Systems
 
     void RendererBackendImplementation<RendererBackend::Metal>::Clear()
     {
-        mInternals->CurrentDrawable = [mInternals->MetalLayer nextDrawable];
-
-        if (!mInternals->CurrentDrawable)
+        while (!mInternals->CurrentDrawable)
         {
-            return;
+            mInternals->CurrentDrawable = [mInternals->MetalLayer nextDrawable];
         }
 
         if (mInternals->DrawableWidth != mInternals->MetalLayer.drawableSize.width || mInternals->DrawableHeight != mInternals->MetalLayer.drawableSize.height)
         {
-            MTLTextureDescriptor* depthDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
-                                                                                                       width:mInternals->MetalLayer.drawableSize.width
-                                                                                                      height:mInternals->MetalLayer.drawableSize.height
-                                                                                                   mipmapped:NO];
-            depthDescriptor.storageMode = MTLStorageModePrivate;
-            depthDescriptor.usage = MTLTextureUsageRenderTarget;
-
-            mInternals->DepthTexture = [mInternals->Device newTextureWithDescriptor:depthDescriptor];
-
             mInternals->DrawableWidth = mInternals->MetalLayer.drawableSize.width;
             mInternals->DrawableHeight = mInternals->MetalLayer.drawableSize.height;
         }
-
-        mInternals->RasterCommandBuffer = [mInternals->CommandQueue commandBuffer];
-
-        MTLRenderPassDescriptor* clearPass = [MTLRenderPassDescriptor renderPassDescriptor];
-
-        clearPass.colorAttachments[0].texture = [mInternals->CurrentDrawable texture];
-        clearPass.colorAttachments[0].loadAction = MTLLoadActionClear;
-        clearPass.colorAttachments[0].storeAction = MTLStoreActionStore;
-        clearPass.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
-
-        clearPass.depthAttachment.texture = mInternals->DepthTexture;
-        clearPass.depthAttachment.loadAction = MTLLoadActionClear;
-        clearPass.depthAttachment.storeAction = MTLStoreActionDontCare;
-        clearPass.depthAttachment.clearDepth = 1.0;
-
-        id<MTLRenderCommandEncoder> clearEncoder = [mInternals->RasterCommandBuffer renderCommandEncoderWithDescriptor:clearPass];
-
-        [clearEncoder endEncoding];
     }
 
     void RendererBackendImplementation<RendererBackend::Metal>::Present()
@@ -528,10 +498,8 @@ namespace Systems
             return;
         }
 
-        [mInternals->RasterCommandBuffer presentDrawable:mInternals->CurrentDrawable];
-        [mInternals->RasterCommandBuffer commit];
+        // TODO: present drawable through a dedicated command buffer
 
-        mInternals->RasterCommandBuffer = nil;
         mInternals->CurrentDrawable = nil;
     }
 
@@ -606,7 +574,7 @@ namespace Systems
         }
 
         id<MTLFunction> vertexFunction = [vertexLibrary newFunctionWithName:[NSString stringWithUTF8String:data.VertexShader.Function.c_str()]];
-        id<MTLFunction> pixelFunction = [vertexLibrary newFunctionWithName:[NSString stringWithUTF8String:data.VertexShader.Function.c_str()]];
+        id<MTLFunction> pixelFunction = [pixelLibrary newFunctionWithName:[NSString stringWithUTF8String:data.PixelShader.Function.c_str()]];
 
         if (!vertexFunction)
         {
@@ -779,9 +747,12 @@ namespace Systems
     {
         data.BackendMetadata = new MetalRenderQueueData();
 
+        auto& renderPassData = mBuffers.Data.Get(data.RenderPass.ID);
         auto& info = *static_cast<MetalRenderQueueData*>(data.BackendMetadata);
+        auto& renderPassInfo = *static_cast<MetalRenderPassData*>(renderPassData.BackendMetadata);
 
-        info.CommandBuffer = [mInternals->CommandQueue commandBuffer];
+        info.Buffer = [mInternals->CommandQueue commandBuffer];
+        info.Encoder = [info.Buffer renderCommandEncoderWithDescriptor:renderPassInfo.RenderPass];
     }
 
     void RendererBackendImplementation<RendererBackend::Metal>::SubmitSubmission(Resources::RenderQueueData& data, Resources::SubmissionData& submissionData)
@@ -789,21 +760,44 @@ namespace Systems
         auto& info = *static_cast<MetalRenderQueueData*>(data.BackendMetadata);
         auto& submissionInfo = *static_cast<MetalSubmissionData*>(submissionData.BackendMetadata);
 
-        // this function should only perform encoding into buffer from submission info
+        auto& pipelineData = mRasterPipelines.Data.Get(submissionData.Pipeline.ID);
+        auto& pipelineInfo = *static_cast<MetalPipelineData*>(pipelineData.BackendMetadata);
+
+        [info.Encoder setRenderPipelineState:pipelineInfo.State];
+
+        for (NSUInteger i = 0; i < pipelineInfo.VertexBufferBindings.size(); i++)
+        {
+            auto& bufferData = mBuffers.Data.Get(submissionData.VertexBuffers[i].ID);
+            auto& bufferInfo = *static_cast<MetalBufferData*>(bufferData.BackendMetadata);
+
+            [info.Encoder setVertexBuffer:bufferInfo.Handle offset:0 atIndex:pipelineInfo.VertexBufferBindings[i]];
+        }
+
+        auto& indexBufferData = mBuffers.Data.Get(submissionData.IndexBuffer.ID);
+        auto& indexBufferInfo = *static_cast<MetalBufferData*>(indexBufferData.BackendMetadata);
+
+        [info.Encoder drawIndexedPrimitives:pipelineInfo.Primitive
+                                 indexCount:submissionInfo.IndexCount
+                                  indexType:submissionInfo.IndexType
+                                indexBuffer:indexBufferInfo.Handle
+                          indexBufferOffset:0];
     }
 
     void RendererBackendImplementation<RendererBackend::Metal>::CommitQueue(Resources::RenderQueueData& data)
     {
-        // this function should only commit the buffer to the render pass
+        auto& info = *static_cast<MetalRenderQueueData*>(data.BackendMetadata);
 
-        auto& info = *static_cast<MetalRenderPassData*>(data.BackendMetadata);
+        [info.Encoder endEncoding];
+        [info.Buffer commit];
     }
 
     void RendererBackendImplementation<RendererBackend::Metal>::DeleteQueue(Resources::RenderQueueData& data)
     {
         auto* info = static_cast<MetalRenderQueueData*>(data.BackendMetadata);
 
-        [info->CommandBuffer release];
+        [info->Encoder endEncoding];
+        [info->Encoder release];
+        [info->Buffer release];
 
         delete info;
 
@@ -818,15 +812,119 @@ namespace Systems
 
         info.RenderPass = [MTLRenderPassDescriptor renderPassDescriptor];
 
-        info.RenderPass.colorAttachments[0].texture = [mInternals->CurrentDrawable texture];
-        info.RenderPass.colorAttachments[0].loadAction = MTLLoadActionLoad;
-        info.RenderPass.colorAttachments[0].storeAction = MTLStoreActionStore;
+        for (std::size_t i = 0; i < data.ColourAttachments.size(); i++)
+        {
+            auto& colourAttachment = data.ColourAttachments[i];
 
-        info.RenderPass.depthAttachment.texture = mInternals->DepthTexture;
-        info.RenderPass.depthAttachment.loadAction = MTLLoadActionLoad;
-        info.RenderPass.depthAttachment.storeAction = MTLStoreActionDontCare;
+            MTLTextureDescriptor* textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
+                                                                                                         width:mInternals->DrawableWidth
+                                                                                                        height:mInternals->DrawableHeight
+                                                                                                     mipmapped:NO];
+            textureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
 
-        info.RenderPass = info.RenderPass;
+            auto clearColour = MTLClearColor(colourAttachment.Clear.r, colourAttachment.Clear.g, colourAttachment.Clear.b, colourAttachment.Clear.a);
+
+            MTLLoadAction loadAction;
+            MTLStoreAction storeAction;
+
+            switch (colourAttachment.Load)
+            {
+                case Resources::LoadOperation::Load:
+                    loadAction = MTLLoadActionLoad;
+                    break;
+                case Resources::LoadOperation::Clear:
+                    loadAction = MTLLoadActionClear;
+                    break;
+                case Resources::LoadOperation::DontCare:
+                    loadAction = MTLLoadActionDontCare;
+                    break;
+            }
+
+            switch (colourAttachment.Store)
+            {
+                case Resources::StoreOperation::Store:
+                    storeAction = MTLStoreActionStore;
+                    break;
+                case Resources::StoreOperation::DontCare:
+                    storeAction = MTLStoreActionDontCare;
+                    break;
+            }
+
+            info.RenderPass.colorAttachments[i].clearColor = clearColour;
+            info.RenderPass.colorAttachments[i].loadAction = loadAction;
+            info.RenderPass.colorAttachments[i].texture = [mInternals->Device newTextureWithDescriptor:textureDescriptor];
+        }
+
+        MTLLoadAction depthLoadAction;
+        MTLStoreAction depthStoreAction;
+        MTLLoadAction stencilLoadAction;
+        MTLStoreAction stencilStoreAction;
+
+        switch (data.DepthAttachment.Load)
+        {
+            case Resources::LoadOperation::Load:
+                depthLoadAction = MTLLoadActionLoad;
+                break;
+            case Resources::LoadOperation::Clear:
+                depthLoadAction = MTLLoadActionClear;
+                break;
+            case Resources::LoadOperation::DontCare:
+                depthLoadAction = MTLLoadActionDontCare;
+                break;
+        }
+
+        switch (data.DepthAttachment.Store)
+        {
+            case Resources::StoreOperation::Store:
+                depthStoreAction = MTLStoreActionStore;
+                break;
+            case Resources::StoreOperation::DontCare:
+                depthStoreAction = MTLStoreActionDontCare;
+                break;
+        }
+
+        switch (data.StencilAttachment.Load)
+        {
+            case Resources::LoadOperation::Load:
+                stencilLoadAction = MTLLoadActionLoad;
+                break;
+            case Resources::LoadOperation::Clear:
+                stencilLoadAction = MTLLoadActionClear;
+                break;
+            case Resources::LoadOperation::DontCare:
+                stencilLoadAction = MTLLoadActionDontCare;
+                break;
+        }
+
+        switch (data.StencilAttachment.Store)
+        {
+            case Resources::StoreOperation::Store:
+                stencilStoreAction = MTLStoreActionStore;
+                break;
+            case Resources::StoreOperation::DontCare:
+                stencilStoreAction = MTLStoreActionDontCare;
+                break;
+        }
+
+        MTLTextureDescriptor* depthStencilDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float_Stencil8
+                                                                                                          width:mInternals->DrawableWidth
+                                                                                                         height:mInternals->DrawableHeight
+                                                                                                      mipmapped:NO];
+
+        depthStencilDescriptor.usage = MTLTextureUsageRenderTarget;
+        depthStencilDescriptor.storageMode = MTLStorageModePrivate;
+
+        id<MTLTexture> depthStencilTexture = [mInternals->Device newTextureWithDescriptor:depthStencilDescriptor];
+
+        info.RenderPass.depthAttachment.texture = depthStencilTexture;
+        info.RenderPass.depthAttachment.loadAction = depthLoadAction;
+        info.RenderPass.depthAttachment.storeAction = depthStoreAction;
+        info.RenderPass.depthAttachment.clearDepth = data.DepthAttachment.Clear;
+
+        info.RenderPass.stencilAttachment.texture = depthStencilTexture;
+        info.RenderPass.stencilAttachment.loadAction = stencilLoadAction;
+        info.RenderPass.stencilAttachment.storeAction = stencilStoreAction;
+        info.RenderPass.stencilAttachment.clearStencil = data.StencilAttachment.Clear;
     }
 
     void RendererBackendImplementation<RendererBackend::Metal>::DeleteRenderPass(Resources::RenderPassData& data)
