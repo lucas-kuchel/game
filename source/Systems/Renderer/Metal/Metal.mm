@@ -79,8 +79,6 @@ namespace Systems
 
         CAMetalLayer* MetalLayer = nil;
 
-        glm::fvec4 ClearColour;
-
         static MetalAttributeTypeInfo GetTypeInfo(Resources::BufferAttribute attribute)
         {
             switch (attribute)
@@ -418,7 +416,7 @@ namespace Systems
         : mSubmissions(descriptor.Submissions), mRasterPipelines(descriptor.RasterPipelines), mBuffers(descriptor.Buffers),
           mWindow(descriptor.Window), mCocoaWindowLayer(mWindow.CreateInteractionLayer<WindowInteractive::CocoaBackend>())
     {
-        NSWindow* window = static_cast<NSWindow*>(mCocoaWindowLayer.GetCocoaWindow());
+        NSWindow* window = static_cast<NSWindow*>(mCocoaWindowLayer.GetNSWindow());
 
         mInternals = std::make_unique<Internals>();
 
@@ -511,11 +509,7 @@ namespace Systems
         clearPass.colorAttachments[0].texture = [mInternals->CurrentDrawable texture];
         clearPass.colorAttachments[0].loadAction = MTLLoadActionClear;
         clearPass.colorAttachments[0].storeAction = MTLStoreActionStore;
-        clearPass.colorAttachments[0].clearColor = MTLClearColorMake(
-            mInternals->ClearColour.r,
-            mInternals->ClearColour.g,
-            mInternals->ClearColour.b,
-            mInternals->ClearColour.a);
+        clearPass.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
 
         clearPass.depthAttachment.texture = mInternals->DepthTexture;
         clearPass.depthAttachment.loadAction = MTLLoadActionClear;
@@ -798,6 +792,13 @@ namespace Systems
         // this function should only perform encoding into buffer from submission info
     }
 
+    void RendererBackendImplementation<RendererBackend::Metal>::CommitQueue(Resources::RenderQueueData& data)
+    {
+        // this function should only commit the buffer to the render pass
+
+        auto& info = *static_cast<MetalRenderPassData*>(data.BackendMetadata);
+    }
+
     void RendererBackendImplementation<RendererBackend::Metal>::DeleteQueue(Resources::RenderQueueData& data)
     {
         auto* info = static_cast<MetalRenderQueueData*>(data.BackendMetadata);
@@ -828,54 +829,6 @@ namespace Systems
         info.RenderPass = info.RenderPass;
     }
 
-    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderQueue(Resources::RenderPassData& data, Resources::RenderQueueData& queueData)
-    {
-        // this function should only commit the buffer to the render pass
-
-        auto& passInfo = *static_cast<MetalRenderPassData*>(data.BackendMetadata);
-        auto& queueInfo = *static_cast<MetalRenderQueueData*>(queueData.BackendMetadata);
-
-        id<MTLRenderCommandEncoder> encoder = [queueInfo.CommandBuffer renderCommandEncoderWithDescriptor:passInfo.RenderPass];
-
-        for (auto& submission : queueData.Submissions)
-        {
-            auto& submissionData = mSubmissions.Data.Get(submission.ID);
-            auto& pipelineData = mRasterPipelines.Data.Get(submissionData.Pipeline.ID);
-            auto& submissionInfo = *static_cast<MetalSubmissionData*>(submissionData.BackendMetadata);
-            auto& pipelineInfo = *static_cast<MetalPipelineData*>(pipelineData.BackendMetadata);
-
-            [encoder setRenderPipelineState:pipelineInfo.State];
-            [encoder setDepthStencilState:pipelineInfo.DepthStencilState];
-            [encoder setCullMode:pipelineInfo.CullMode];
-            [encoder setFrontFacingWinding:pipelineInfo.CullWinding];
-            [encoder setTriangleFillMode:pipelineInfo.FillMode];
-
-            for (size_t i = 0; i < submissionData.VertexBuffers.size(); i++)
-            {
-                auto& bufferData = mBuffers.Data.Get(submissionData.VertexBuffers[i].ID);
-                auto& bufferInfo = *static_cast<MetalBufferData*>(bufferData.BackendMetadata);
-
-                [encoder setVertexBuffer:bufferInfo.Handle offset:0 atIndex:pipelineInfo.VertexBufferBindings[i]];
-            }
-
-            auto& indexBufferData = mBuffers.Data.Get(submissionData.IndexBuffer.ID);
-            auto& indexBufInfo = *static_cast<MetalBufferData*>(indexBufferData.BackendMetadata);
-
-            [encoder drawIndexedPrimitives:pipelineInfo.Primitive
-                                indexCount:submissionInfo.IndexCount
-                                 indexType:submissionInfo.IndexType
-                               indexBuffer:indexBufInfo.Handle
-                         indexBufferOffset:0];
-        }
-
-        [encoder endEncoding];
-    }
-
-    void RendererBackendImplementation<RendererBackend::Metal>::SubmitRenderPass(Resources::RenderPassData& data)
-    {
-        // draw render pass
-    }
-
     void RendererBackendImplementation<RendererBackend::Metal>::DeleteRenderPass(Resources::RenderPassData& data)
     {
         auto* info = static_cast<MetalRenderPassData*>(data.BackendMetadata);
@@ -885,8 +838,7 @@ namespace Systems
         data.BackendMetadata = nullptr;
     }
 
-    template <>
-    void RendererBackendImplementation<RendererBackend::Metal>::Set<RendererAttribute::VSyncMode>(const RendererVSyncMode& vsyncMode)
+    void RendererBackendImplementation<RendererBackend::Metal>::SetVSyncMode(RendererVSyncMode vsyncMode)
     {
         switch (vsyncMode)
         {
@@ -902,12 +854,6 @@ namespace Systems
                                                                    "Metal does not support 'RendererVSyncMode::AllowLate'\n"
                                                                    "Use another supported VSync mode");
         }
-    }
-
-    template <>
-    void RendererBackendImplementation<RendererBackend::Metal>::Set<RendererAttribute::ClearColour>(const RendererClearColour& clearColour)
-    {
-        mInternals->ClearColour = clearColour;
     }
 }
 #endif

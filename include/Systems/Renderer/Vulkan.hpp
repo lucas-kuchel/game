@@ -60,8 +60,10 @@ namespace Systems
     private:
         struct Internals
         {
+#if !defined(PLATFORM_APPLE)
             VkInstance Instance;
             VkPhysicalDevice PhysicalDevice;
+#endif
         };
 
         Internals mInternals;

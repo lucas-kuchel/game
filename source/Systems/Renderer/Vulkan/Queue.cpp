@@ -1,3 +1,4 @@
+#if !defined(PLATFORM_APPLE)
 #include <Systems/Renderer.hpp>
 #include <Systems/Renderer/Vulkan.hpp>
 
@@ -21,3 +22,4 @@ namespace Systems
     {
     }
 }
+#endif

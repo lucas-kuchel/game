@@ -51,7 +51,7 @@ namespace Program
     Systems::ContextDescriptor Application::CreateContext()
     {
         return {
-            .Renderer = Systems::RendererBackend::Vulkan,
+            .Renderer = Systems::RendererBackend::Metal,
         };
     }
 

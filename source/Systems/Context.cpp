@@ -21,7 +21,6 @@ namespace Systems
             case RendererBackend::Metal:
 #if !defined(PLATFORM_APPLE)
                 throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::Context::Context():\n"
-                                                                           "\n"
                                                                            "Metal graphics API is only available on macOS\n"
                                                                            "change Systems::ContextDescriptor::Renderer to a supported API for this platform");
 #endif
@@ -29,7 +28,6 @@ namespace Systems
             case RendererBackend::Vulkan:
 #if defined(PLATFORM_APPLE)
                 throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::Context::Context():\n"
-                                                                           "\n"
                                                                            "Vulkan graphics API is unavailable on macOS\n"
                                                                            "change Systems::ContextDescriptor::Renderer to Metal for macOS");
 #endif
@@ -37,7 +35,6 @@ namespace Systems
             case RendererBackend::DirectX12:
 #if defined(PLATFORM_UNIX)
                 throw Debug::Exception(Debug::ErrorCode::INVALID_ARGUMENT, "Systems::Context::Context():\n"
-                                                                           "\n"
                                                                            "Direct3D graphics API is unavailable on Unix-like operating systems\n"
                                                                            "change Systems::ContextDescriptor::Renderer to Metal for macOS or Vulkan for Linux");
 #endif
