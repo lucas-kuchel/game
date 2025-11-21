@@ -1,0 +1,15 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/lucas/Documents/Development/game/build/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/game/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/engine/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/_deps/vulkanmemoryallocator-build/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/_deps/glm-build/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/_deps/glm-build/glm/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/_deps/glfw-build/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/_deps/glfw-build/src/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/_deps/glfw-build/docs/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
