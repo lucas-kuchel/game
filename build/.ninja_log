@@ -1,8 +1,8 @@
 # ninja log v7
-12	481	1763725813193542616	game/CMakeFiles/game.dir/src/main.cpp.o	3dd6074bffa76ad3
+3	460	1763894956656485229	game/CMakeFiles/game.dir/src/main.cpp.o	3dd6074bffa76ad3
 11	39	1763681358561788206	engine/CMakeFiles/engine.dir/src/foo.cpp.o	46006bf39fb6ffc7
-273	310	1763725740742885107	engine/libengine.a	5fb6694679d21058
-481	588	1763725813663135919	game/game	6f01452042b8ea58
+39	76	1763826452548232003	engine/libengine.a	5fb6694679d21058
+460	500	1763894957113637606	game/game	ba0a3faef19035ee
 2	397	1763681335876592304	_deps/glfw-build/src/CMakeFiles/glfw.dir/platform.c.o	7280af76ffe18b74
 1	403	1763681335875985556	_deps/glfw-build/src/CMakeFiles/glfw.dir/context.c.o	2dc9d293e4c8c86d
 2	406	1763681335876799261	_deps/glfw-build/src/CMakeFiles/glfw.dir/vulkan.c.o	3bb1f6c49df7389b
@@ -27,6 +27,6 @@
 1301	1345	1763681337175656317	_deps/glfw-build/src/libglfw3.a	baad5e96436bdd20
 721	1840	1763681336596014606	_deps/glm-build/glm/CMakeFiles/glm.dir/detail/glm.cpp.o	708cd6dea60b3f39
 1842	1880	1763681337716201207	_deps/glm-build/glm/libglm.a	1bd715d5c852e99d
-46	273	1763725740515772135	engine/CMakeFiles/engine.dir/src/subsystem.cpp.o	9537660ef6cba202
-12	450	1763725900036644532	game/CMakeFiles/game.dir/src/main.cpp.o	3dd6074bffa76ad3
-450	559	1763725900474284543	game/game	6f01452042b8ea58
+3	39	1763826452512453061	engine/CMakeFiles/engine.dir/src/subsystem.cpp.o	321a1274892a1895
+3	466	1763895188523770233	game/CMakeFiles/game.dir/src/main.cpp.o	3dd6074bffa76ad3
+466	511	1763895188986379826	game/game	ba0a3faef19035ee

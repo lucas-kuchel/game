@@ -1,110 +1,235 @@
 #pragma once
 
+#include <engine/traits.hpp>
+
 #include <cmath>
 #include <cstdlib>
 
 namespace engine {
-    struct Vector2 {
-        float x = 0.0;
-        float y = 0.0;
+    template <typename T, std::size_t N>
+    requires(IsFloatingType<T> && IsInRange<std::size_t, 2, 4, N>)
+    struct Vector;
 
-        auto operator+(const Vector2& other) const -> Vector2 {
-            return Vector2{
+    template <typename T>
+    struct Vector<T, 2> {
+    public:
+        Vector(T x, T y)
+            : x(x), y(y) {
+        }
+
+        Vector(T i = 0.0)
+            : x(i), y(i) {
+        }
+
+        [[nodiscard]] T& operator[](std::size_t index) noexcept {
+            return reinterpret_cast<T*>(this)[index];
+        }
+
+        [[nodiscard]] const T& operator[](std::size_t index) const noexcept {
+            return reinterpret_cast<const T*>(this)[index];
+        }
+
+        [[nodiscard]] Vector operator+(const Vector& other) const noexcept {
+            return {
                 .x = x + other.x,
                 .y = y + other.y,
             };
         }
 
-        auto operator-(const Vector2& other) const -> Vector2 {
-            return Vector2{
+        [[nodiscard]] Vector operator-(const Vector& other) const noexcept {
+            return {
                 .x = x - other.x,
                 .y = y - other.y,
             };
         }
 
-        auto operator*(const Vector2& other) const -> Vector2 {
-            return Vector2{
+        [[nodiscard]] Vector operator*(const Vector& other) const noexcept {
+            return {
                 .x = x * other.x,
                 .y = y * other.y,
             };
         }
 
-        auto operator/(const Vector2& other) const -> Vector2 {
-            return Vector2{
+        [[nodiscard]] Vector operator/(const Vector& other) const noexcept {
+            return {
                 .x = x / other.x,
                 .y = y / other.y,
             };
         }
 
-        auto operator[](std::size_t index) const -> const float& {
-            switch (index) {
-                case 0:
-                    return x;
-                case 1:
-                    return y;
-                default:
-                    return x;
-            }
+        [[nodiscard]] Vector operator+(const T& other) const noexcept {
+            return {
+                .x = x + other,
+                .y = y + other,
+            };
         }
 
-        auto operator[](std::size_t index) -> float& {
-            switch (index) {
-                case 0:
-                    return x;
-                case 1:
-                    return y;
-                default:
-                    return x;
-            }
+        [[nodiscard]] Vector operator-(const T& other) const noexcept {
+            return {
+                .x = x - other,
+                .y = y - other,
+            };
         }
+
+        [[nodiscard]] Vector operator*(const T& other) const noexcept {
+            return {
+                .x = x * other,
+                .y = y * other,
+            };
+        }
+
+        [[nodiscard]] Vector operator/(const T& other) const noexcept {
+            return {
+                .x = x / other,
+                .y = y / other,
+            };
+        }
+
+        [[nodiscard]] static inline T dot(const Vector<T, 2>& one, const Vector<T, 2>& two) {
+            return (one.x * two.x) + (one.y * two.y);
+        }
+
+        [[nodiscard]] static inline T magnitude(const Vector<T, 2>& vec) noexcept {
+            return std::sqrt((vec.x * vec.x) + (vec.y * vec.y));
+        }
+
+        [[nodiscard]] static inline T length(const Vector<T, 2>& vec) noexcept {
+            return std::sqrt((vec.x * vec.x) + (vec.y * vec.y));
+        }
+
+        T x;
+        T y;
     };
 
-    struct Vector3 {
-        float x;
-        float y;
-        float z;
+    template <typename T>
+    struct Vector<T, 3> {
+    public:
+        Vector(T x, T y, T z)
+            : x(x), y(y), z(z) {
+        }
 
-        auto operator+(const Vector3& other) const -> Vector3 {
-            return Vector3{
+        Vector(T i = 0.0)
+            : x(i), y(i), z(i) {
+        }
+
+        [[nodiscard]] T& operator[](std::size_t index) noexcept {
+            return reinterpret_cast<T*>(this)[index];
+        }
+
+        [[nodiscard]] const T& operator[](std::size_t index) const noexcept {
+            return reinterpret_cast<const T*>(this)[index];
+        }
+
+        [[nodiscard]] Vector operator+(const Vector& other) const noexcept {
+            return {
                 .x = x + other.x,
                 .y = y + other.y,
                 .z = z + other.z,
             };
         }
 
-        auto operator-(const Vector3& other) const -> Vector3 {
-            return Vector3{
+        [[nodiscard]] Vector operator-(const Vector& other) const noexcept {
+            return {
                 .x = x - other.x,
                 .y = y - other.y,
                 .z = z - other.z,
             };
         }
 
-        auto operator*(const Vector3& other) const -> Vector3 {
-            return Vector3{
+        [[nodiscard]] Vector operator*(const Vector& other) const noexcept {
+            return {
                 .x = x * other.x,
                 .y = y * other.y,
                 .z = z * other.z,
             };
         }
 
-        auto operator/(const Vector3& other) const -> Vector3 {
-            return Vector3{
+        [[nodiscard]] Vector operator/(const Vector& other) const noexcept {
+            return {
                 .x = x / other.x,
                 .y = y / other.y,
                 .z = z / other.z,
             };
         }
+
+        [[nodiscard]] Vector operator+(const T& other) const noexcept {
+            return {
+                .x = x + other,
+                .y = y + other,
+                .z = z + other,
+            };
+        }
+
+        [[nodiscard]] Vector operator-(const T& other) const noexcept {
+            return {
+                .x = x - other,
+                .y = y - other,
+                .z = z - other,
+            };
+        }
+
+        [[nodiscard]] Vector operator*(const T& other) const noexcept {
+            return {
+                .x = x * other,
+                .y = y * other,
+                .z = z * other,
+            };
+        }
+
+        [[nodiscard]] Vector operator/(const T& other) const noexcept {
+            return {
+                .x = x / other,
+                .y = y / other,
+                .z = z / other,
+            };
+        }
+
+        [[nodiscard]] static inline T dot(const Vector<T, 3>& one, const Vector<T, 3>& two) noexcept {
+            return (one.x * two.x) + (one.y * two.y) + (one.z * two.z);
+        }
+
+        [[nodiscard]] static inline T magnitude(const Vector<T, 3>& vec) noexcept {
+            return std::sqrt((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
+        }
+
+        [[nodiscard]] static inline T length(const Vector<T, 3>& vec) noexcept {
+            return std::sqrt((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
+        }
+
+        [[nodiscard]] static inline Vector<T, 3> cross(const Vector<T, 3>& one, const Vector<T, 3>& two) noexcept {
+            return Vector<T, 3>{
+                .x = (one.x * two.z) - (one.z * two.y),
+                .y = (one.z * two.x) - (one.x * two.z),
+                .z = (one.x * two.y) - (one.y * two.x),
+            };
+        }
+
+        T x;
+        T y;
+        T z;
     };
 
-    struct Vector4 {
-        float x;
-        float y;
-        float z;
-        float w;
+    template <typename T>
+    struct Vector<T, 4> {
+    public:
+        Vector(T x, T y, T z, T w)
+            : x(x), y(y), z(z), w(w) {
+        }
 
-        auto operator+(const Vector4& other) const -> Vector4 {
-            return Vector4{
+        Vector(T i = 0.0)
+            : x(i), y(i), z(i), w(i) {
+        }
+
+        [[nodiscard]] T& operator[](std::size_t index) noexcept {
+            return reinterpret_cast<T*>(this)[index];
+        }
+
+        [[nodiscard]] const T& operator[](std::size_t index) const noexcept {
+            return reinterpret_cast<const T*>(this)[index];
+        }
+
+        [[nodiscard]] Vector operator+(const Vector& other) const noexcept {
+            return {
                 .x = x + other.x,
                 .y = y + other.y,
                 .z = z + other.z,
@@ -112,75 +237,101 @@ namespace engine {
             };
         }
 
-        auto operator-(const Vector4& other) const -> Vector4 {
-            return Vector4{
+        [[nodiscard]] Vector operator-(const Vector& other) const noexcept {
+            return {
                 .x = x - other.x,
                 .y = y - other.y,
                 .z = z - other.z,
-                .w = w - other.w,
+                .w = w - other.z,
             };
         }
 
-        auto operator*(const Vector4& other) const -> Vector4 {
-            return Vector4{
+        [[nodiscard]] Vector operator*(const Vector& other) const noexcept {
+            return {
                 .x = x * other.x,
                 .y = y * other.y,
                 .z = z * other.z,
-                .w = w * other.w,
+                .w = w * other.z,
             };
         }
 
-        auto operator/(const Vector4& other) const -> Vector4 {
-            return Vector4{
+        [[nodiscard]] Vector operator/(const Vector& other) const noexcept {
+            return {
                 .x = x / other.x,
                 .y = y / other.y,
                 .z = z / other.z,
-                .w = w / other.w,
+                .w = w / other.z,
             };
         }
+
+        [[nodiscard]] Vector operator+(const T& other) const noexcept {
+            return {
+                .x = x + other,
+                .y = y + other,
+                .z = z + other,
+                .w = w + other,
+            };
+        }
+
+        [[nodiscard]] Vector operator-(const T& other) const noexcept {
+            return {
+                .x = x - other,
+                .y = y - other,
+                .z = z - other,
+                .w = w - other,
+            };
+        }
+
+        [[nodiscard]] Vector operator*(const T& other) const noexcept {
+            return {
+                .x = x * other,
+                .y = y * other,
+                .z = z * other,
+                .w = w * other,
+            };
+        }
+
+        [[nodiscard]] Vector operator/(const T& other) const noexcept {
+            return {
+                .x = x / other,
+                .y = y / other,
+                .z = z / other,
+                .w = w / other,
+            };
+        }
+
+        [[nodiscard]] static inline T dot(const Vector<T, 4>& one, const Vector<T, 4>& two) noexcept {
+            return (one.x * two.x) + (one.y * two.y) + (one.z * two.z) + (one.w * two.w);
+        }
+
+        [[nodiscard]] static inline T magnitude(const Vector<T, 4>& vec) noexcept {
+            return std::sqrt((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z) + (vec.w * vec.w));
+        }
+
+        [[nodiscard]] static inline T length(const Vector<T, 4>& vec) noexcept {
+            return std::sqrt((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z) + (vec.w * vec.w));
+        }
+
+        T x;
+        T y;
+        T z;
+        T w;
     };
 
-    [[nodiscard]] inline auto dot(const Vector2& one, const Vector2& two) -> float {
-        return (one.x * two.x) + (one.y * two.y);
-    }
+    template <typename T>
+    using Vector2 = Vector<T, 2>;
 
-    [[nodiscard]] inline auto dot(const Vector3& one, const Vector3& two) -> float {
-        return (one.x * two.x) + (one.y * two.y) + (one.z * two.z);
-    }
+    template <typename T>
+    using Vector3 = Vector<T, 3>;
 
-    [[nodiscard]] inline auto dot(const Vector4& one, const Vector4& two) -> float {
-        return (one.x * two.x) + (one.y * two.y) + (one.z * two.z) + (one.w * two.w);
-    }
+    template <typename T>
+    using Vector4 = Vector<T, 4>;
 
-    [[nodiscard]] inline auto magnitude(const Vector2& one) -> float {
-        return std::sqrt((one.x * one.x) + (one.y * one.y));
-    }
+    using Vector2f = Vector2<float>;
+    using Vector3f = Vector3<float>;
+    using Vector4f = Vector4<float>;
 
-    [[nodiscard]] inline auto magnitude(const Vector3& one) -> float {
-        return std::sqrt((one.x * one.x) + (one.y * one.y) + (one.z * one.z));
-    }
-
-    [[nodiscard]] inline auto magnitude(const Vector4& one) -> float {
-        return std::sqrt((one.x * one.x) + (one.y * one.y) + (one.z * one.z) + (one.w * one.w));
-    }
-
-    [[nodiscard]] inline auto length(const Vector2& one) -> float {
-        return std::sqrt((one.x * one.x) + (one.y * one.y));
-    }
-
-    [[nodiscard]] inline auto length(const Vector3& one) -> float {
-        return std::sqrt((one.x * one.x) + (one.y * one.y) + (one.z * one.z));
-    }
-
-    [[nodiscard]] inline auto length(const Vector4& one) -> float {
-        return std::sqrt((one.x * one.x) + (one.y * one.y) + (one.z * one.z) + (one.w * one.w));
-    }
-
-    [[nodiscard]] inline auto cross(const Vector3& one, const Vector3& two) -> Vector3 {
-        return Vector3{
-            .x = (one.x * two.z) - (one.z * two.y),
-            .y = (one.z * two.x) - (one.x * two.z),
-            .z = (one.x * two.y) - (one.y * two.x),
-        };
-    }
+    using Vector2d = Vector2<double>;
+    using Vector3d = Vector3<double>;
+    using Vector4d = Vector4<double>;
 }

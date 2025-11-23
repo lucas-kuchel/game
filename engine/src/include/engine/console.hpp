@@ -34,6 +34,10 @@ namespace engine {
             std::cout << std::format(message, std::forward<Args>(args)...) << '\n';
         }
 
+        static void printLine() noexcept {
+            std::cout << '\n';
+        }
+
         static constexpr std::string_view NEWLINE = "\n";
         static constexpr std::string_view TAB = "\t";
 
