@@ -8,7 +8,7 @@
         {
             "name": "debug",
             "displayName": "Debug Build",
-            "description": "Builds Vulkanite vulkanite for debugging - No optimisations, all warnings enabled and debug symbols",
+            "description": "Builds for Debug",
             "hidden": false,
             "generator": "Ninja",
             "cacheVariables": {
@@ -22,7 +22,7 @@
         {
             "name": "release",
             "displayName": "Release Build",
-            "description": "Builds Vulkanite vulkanite for Release - All optimisations, all warnings disabled and no debug symbols",
+            "description": "Builds Vfor Release",
             "hidden": false,
             "generator": "Ninja",
             "cacheVariables": {

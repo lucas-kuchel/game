@@ -5,10 +5,19 @@
             "name": "Debug",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/build/game",
+            "program": "${workspaceFolder}/build/game/game",
             "args": [],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build: Debug",
+        },
+        {
+            "name": "Release",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/game/game",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build: Release",
         }
     ]
 }

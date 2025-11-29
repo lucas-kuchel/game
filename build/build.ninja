@@ -39,13 +39,13 @@ include CMakeFiles/rules.ninja
 #############################################
 # Logical path to working directory; prefix for absolute paths.
 
-cmake_ninja_workdir = /Users/lucas/Documents/Development/game/build/
+cmake_ninja_workdir = /home/lucas-kuchel/Documents/Development/game/build/
 
 #############################################
 # Utility command for edit_cache
 
 build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /Users/lucas/Documents/Development/game/build && /opt/homebrew/bin/ccmake -S/Users/lucas/Documents/Development/game -B/Users/lucas/Documents/Development/game/build
+  COMMAND = cd /home/lucas-kuchel/Documents/Development/game/build && /usr/bin/ccmake -S/home/lucas-kuchel/Documents/Development/game -B/home/lucas-kuchel/Documents/Development/game/build
   DESC = Running CMake cache editor...
   pool = console
   restat = 1
@@ -57,7 +57,7 @@ build edit_cache: phony CMakeFiles/edit_cache.util
 # Utility command for rebuild_cache
 
 build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /Users/lucas/Documents/Development/game/build && /opt/homebrew/bin/cmake --regenerate-during-build -S/Users/lucas/Documents/Development/game -B/Users/lucas/Documents/Development/game/build
+  COMMAND = cd /home/lucas-kuchel/Documents/Development/game/build && /usr/bin/cmake --regenerate-during-build -S/home/lucas-kuchel/Documents/Development/game -B/home/lucas-kuchel/Documents/Development/game/build
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -66,7 +66,7 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# /Users/lucas/Documents/Development/game/CMakeLists.txt
+# /home/lucas-kuchel/Documents/Development/game/CMakeLists.txt
 # =============================================================================
 
 # =============================================================================
@@ -76,15 +76,15 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 #############################################
 # Order-only phony target for game
 
-build cmake_object_order_depends_target_game: phony || cmake_object_order_depends_target_engine
+build cmake_object_order_depends_target_game: phony || .
 
-build game/CMakeFiles/game.dir/src/main.cpp.o: CXX_COMPILER__game_unscanned_Debug /Users/lucas/Documents/Development/game/game/src/main.cpp || cmake_object_order_depends_target_game
+build game/CMakeFiles/game.dir/source/main.cpp.o: CXX_COMPILER__game_unscanned_Debug /home/lucas-kuchel/Documents/Development/game/game/source/main.cpp || cmake_object_order_depends_target_game
   CONFIG = Debug
-  DEP_FILE = game/CMakeFiles/game.dir/src/main.cpp.o.d
-  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Wnonnull -Wimplicit-fallthrough -Wunused
-  INCLUDES = -I/Users/lucas/Documents/Development/game/game/src/include -I/Users/lucas/Documents/Development/game/engine/src/include
+  DEP_FILE = game/CMakeFiles/game.dir/source/main.cpp.o.d
+  FLAGS = -g -std=c++23 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Wnonnull -Wimplicit-fallthrough -Wunused
+  INCLUDES = -I/home/lucas-kuchel/Documents/Development/game/game/source/include -I/home/lucas-kuchel/Documents/Development/game/spark-engine/source/include
   OBJECT_DIR = game/CMakeFiles/game.dir
-  OBJECT_FILE_DIR = game/CMakeFiles/game.dir/src
+  OBJECT_FILE_DIR = game/CMakeFiles/game.dir/source
 
 
 # =============================================================================
@@ -94,11 +94,11 @@ build game/CMakeFiles/game.dir/src/main.cpp.o: CXX_COMPILER__game_unscanned_Debu
 #############################################
 # Link the executable game/game
 
-build game/game: CXX_EXECUTABLE_LINKER__game_Debug game/CMakeFiles/game.dir/src/main.cpp.o | engine/libengine.a || engine/libengine.a
+build game/game: CXX_EXECUTABLE_LINKER__game_Debug game/CMakeFiles/game.dir/source/main.cpp.o
   CONFIG = Debug
-  FLAGS = -g -arch arm64
-  LINK_FLAGS = -Wl,-search_paths_first -Wl,-headerpad_max_install_names
-  LINK_LIBRARIES = engine/libengine.a
+  DEP_FILE = game/CMakeFiles/game.dir/link.d
+  FLAGS = -g
+  LINK_FLAGS = -Wl,--dependency-file=game/CMakeFiles/game.dir/link.d
   OBJECT_DIR = game/CMakeFiles/game.dir
   POST_BUILD = :
   PRE_LINK = :
@@ -110,7 +110,7 @@ build game/game: CXX_EXECUTABLE_LINKER__game_Debug game/CMakeFiles/game.dir/src/
 # Utility command for edit_cache
 
 build game/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /Users/lucas/Documents/Development/game/build/game && /opt/homebrew/bin/ccmake -S/Users/lucas/Documents/Development/game -B/Users/lucas/Documents/Development/game/build
+  COMMAND = cd /home/lucas-kuchel/Documents/Development/game/build/game && /usr/bin/ccmake -S/home/lucas-kuchel/Documents/Development/game -B/home/lucas-kuchel/Documents/Development/game/build
   DESC = Running CMake cache editor...
   pool = console
   restat = 1
@@ -122,7 +122,7 @@ build game/edit_cache: phony game/CMakeFiles/edit_cache.util
 # Utility command for rebuild_cache
 
 build game/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /Users/lucas/Documents/Development/game/build/game && /opt/homebrew/bin/cmake --regenerate-during-build -S/Users/lucas/Documents/Development/game -B/Users/lucas/Documents/Development/game/build
+  COMMAND = cd /home/lucas-kuchel/Documents/Development/game/build/game && /usr/bin/cmake --regenerate-during-build -S/home/lucas-kuchel/Documents/Development/game -B/home/lucas-kuchel/Documents/Development/game/build
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -131,76 +131,37 @@ build game/rebuild_cache: phony game/CMakeFiles/rebuild_cache.util
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# /Users/lucas/Documents/Development/game/CMakeLists.txt
+# /home/lucas-kuchel/Documents/Development/game/CMakeLists.txt
 # =============================================================================
-
-# =============================================================================
-# Object build statements for STATIC_LIBRARY target engine
-
-
-#############################################
-# Order-only phony target for engine
-
-build cmake_object_order_depends_target_engine: phony || .
-
-build engine/CMakeFiles/engine.dir/src/subsystem.cpp.o: CXX_COMPILER__engine_unscanned_Debug /Users/lucas/Documents/Development/game/engine/src/subsystem.cpp || cmake_object_order_depends_target_engine
-  CONFIG = Debug
-  DEP_FILE = engine/CMakeFiles/engine.dir/src/subsystem.cpp.o.d
-  FLAGS = -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Wnonnull -Wimplicit-fallthrough -Wunused
-  INCLUDES = -I/Users/lucas/Documents/Development/game/engine/src/include
-  OBJECT_DIR = engine/CMakeFiles/engine.dir
-  OBJECT_FILE_DIR = engine/CMakeFiles/engine.dir/src
-
-
-# =============================================================================
-# Link build statements for STATIC_LIBRARY target engine
-
-
-#############################################
-# Link the static library engine/libengine.a
-
-build engine/libengine.a: CXX_STATIC_LIBRARY_LINKER__engine_Debug engine/CMakeFiles/engine.dir/src/subsystem.cpp.o
-  ARCH_FLAGS = -arch arm64
-  CONFIG = Debug
-  LANGUAGE_COMPILE_FLAGS = -g
-  OBJECT_DIR = engine/CMakeFiles/engine.dir
-  POST_BUILD = :
-  PRE_LINK = :
-  TARGET_FILE = engine/libengine.a
-  TARGET_PDB = engine.a.dbg
 
 
 #############################################
 # Utility command for edit_cache
 
-build engine/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /Users/lucas/Documents/Development/game/build/engine && /opt/homebrew/bin/ccmake -S/Users/lucas/Documents/Development/game -B/Users/lucas/Documents/Development/game/build
+build spark-engine/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /home/lucas-kuchel/Documents/Development/game/build/spark-engine && /usr/bin/ccmake -S/home/lucas-kuchel/Documents/Development/game -B/home/lucas-kuchel/Documents/Development/game/build
   DESC = Running CMake cache editor...
   pool = console
   restat = 1
 
-build engine/edit_cache: phony engine/CMakeFiles/edit_cache.util
+build spark-engine/edit_cache: phony spark-engine/CMakeFiles/edit_cache.util
 
 
 #############################################
 # Utility command for rebuild_cache
 
-build engine/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /Users/lucas/Documents/Development/game/build/engine && /opt/homebrew/bin/cmake --regenerate-during-build -S/Users/lucas/Documents/Development/game -B/Users/lucas/Documents/Development/game/build
+build spark-engine/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /home/lucas-kuchel/Documents/Development/game/build/spark-engine && /usr/bin/cmake --regenerate-during-build -S/home/lucas-kuchel/Documents/Development/game -B/home/lucas-kuchel/Documents/Development/game/build
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
 
-build engine/rebuild_cache: phony engine/CMakeFiles/rebuild_cache.util
+build spark-engine/rebuild_cache: phony spark-engine/CMakeFiles/rebuild_cache.util
 
 # =============================================================================
 # Target aliases.
 
-build engine: phony engine/libengine.a
-
 build game: phony game/game
-
-build libengine.a: phony engine/libengine.a
 
 # =============================================================================
 # Folder targets.
@@ -208,23 +169,23 @@ build libengine.a: phony engine/libengine.a
 # =============================================================================
 
 #############################################
-# Folder: /Users/lucas/Documents/Development/game/build
+# Folder: /home/lucas-kuchel/Documents/Development/game/build
 
-build all: phony game/all engine/all
-
-# =============================================================================
-
-#############################################
-# Folder: /Users/lucas/Documents/Development/game/build/engine
-
-build engine/all: phony engine/libengine.a
+build all: phony game/all spark-engine/all
 
 # =============================================================================
 
 #############################################
-# Folder: /Users/lucas/Documents/Development/game/build/game
+# Folder: /home/lucas-kuchel/Documents/Development/game/build/game
 
 build game/all: phony game/game
+
+# =============================================================================
+
+#############################################
+# Folder: /home/lucas-kuchel/Documents/Development/game/build/spark-engine
+
+build spark-engine/all: phony
 
 # =============================================================================
 # Built-in targets
@@ -233,14 +194,14 @@ build game/all: phony game/game
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja /Users/lucas/Documents/Development/game/build/cmake_install.cmake /Users/lucas/Documents/Development/game/build/game/cmake_install.cmake /Users/lucas/Documents/Development/game/build/engine/cmake_install.cmake: RERUN_CMAKE | /Users/lucas/Documents/Development/game/CMakeLists.txt /Users/lucas/Documents/Development/game/engine/CMakeLists.txt /Users/lucas/Documents/Development/game/game/CMakeLists.txt /opt/homebrew/share/cmake/Modules/CMakeCXXInformation.cmake /opt/homebrew/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /opt/homebrew/share/cmake/Modules/CMakeGenericSystem.cmake /opt/homebrew/share/cmake/Modules/CMakeInitializeConfigs.cmake /opt/homebrew/share/cmake/Modules/CMakeLanguageInformation.cmake /opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /opt/homebrew/share/cmake/Modules/Compiler/AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /opt/homebrew/share/cmake/Modules/Compiler/Clang.cmake /opt/homebrew/share/cmake/Modules/Compiler/GNU.cmake /opt/homebrew/share/cmake/Modules/ExternalProject/shared_internal_commands.cmake /opt/homebrew/share/cmake/Modules/FetchContent.cmake /opt/homebrew/share/cmake/Modules/FindPackageHandleStandardArgs.cmake /opt/homebrew/share/cmake/Modules/FindPackageMessage.cmake /opt/homebrew/share/cmake/Modules/FindVulkan.cmake /opt/homebrew/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /opt/homebrew/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /opt/homebrew/share/cmake/Modules/Linker/AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Linker/AppleClang.cmake /opt/homebrew/share/cmake/Modules/Platform/Apple-AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Platform/Apple-Clang-CXX.cmake /opt/homebrew/share/cmake/Modules/Platform/Apple-Clang.cmake /opt/homebrew/share/cmake/Modules/Platform/Darwin-Initialize.cmake /opt/homebrew/share/cmake/Modules/Platform/Darwin.cmake /opt/homebrew/share/cmake/Modules/Platform/Linker/Apple-AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Platform/Linker/Apple-AppleClang.cmake /opt/homebrew/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/4.1.1/CMakeCXXCompiler.cmake CMakeFiles/4.1.1/CMakeSystem.cmake
+build build.ninja /home/lucas-kuchel/Documents/Development/game/build/cmake_install.cmake /home/lucas-kuchel/Documents/Development/game/build/game/cmake_install.cmake /home/lucas-kuchel/Documents/Development/game/build/spark-engine/cmake_install.cmake: RERUN_CMAKE | /home/lucas-kuchel/Documents/Development/game/CMakeLists.txt /home/lucas-kuchel/Documents/Development/game/game/CMakeLists.txt /home/lucas-kuchel/Documents/Development/game/spark-engine/CMakeLists.txt /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /usr/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /usr/share/cmake/Modules/Linker/GNU-CXX.cmake /usr/share/cmake/Modules/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/4.1.2/CMakeCXXCompiler.cmake CMakeFiles/4.1.2/CMakeSystem.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build /Users/lucas/Documents/Development/game/CMakeLists.txt /Users/lucas/Documents/Development/game/engine/CMakeLists.txt /Users/lucas/Documents/Development/game/game/CMakeLists.txt /opt/homebrew/share/cmake/Modules/CMakeCXXInformation.cmake /opt/homebrew/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /opt/homebrew/share/cmake/Modules/CMakeGenericSystem.cmake /opt/homebrew/share/cmake/Modules/CMakeInitializeConfigs.cmake /opt/homebrew/share/cmake/Modules/CMakeLanguageInformation.cmake /opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /opt/homebrew/share/cmake/Modules/Compiler/AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /opt/homebrew/share/cmake/Modules/Compiler/Clang.cmake /opt/homebrew/share/cmake/Modules/Compiler/GNU.cmake /opt/homebrew/share/cmake/Modules/ExternalProject/shared_internal_commands.cmake /opt/homebrew/share/cmake/Modules/FetchContent.cmake /opt/homebrew/share/cmake/Modules/FindPackageHandleStandardArgs.cmake /opt/homebrew/share/cmake/Modules/FindPackageMessage.cmake /opt/homebrew/share/cmake/Modules/FindVulkan.cmake /opt/homebrew/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /opt/homebrew/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /opt/homebrew/share/cmake/Modules/Linker/AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Linker/AppleClang.cmake /opt/homebrew/share/cmake/Modules/Platform/Apple-AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Platform/Apple-Clang-CXX.cmake /opt/homebrew/share/cmake/Modules/Platform/Apple-Clang.cmake /opt/homebrew/share/cmake/Modules/Platform/Darwin-Initialize.cmake /opt/homebrew/share/cmake/Modules/Platform/Darwin.cmake /opt/homebrew/share/cmake/Modules/Platform/Linker/Apple-AppleClang-CXX.cmake /opt/homebrew/share/cmake/Modules/Platform/Linker/Apple-AppleClang.cmake /opt/homebrew/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/4.1.1/CMakeCXXCompiler.cmake CMakeFiles/4.1.1/CMakeSystem.cmake: phony
+build /home/lucas-kuchel/Documents/Development/game/CMakeLists.txt /home/lucas-kuchel/Documents/Development/game/game/CMakeLists.txt /home/lucas-kuchel/Documents/Development/game/spark-engine/CMakeLists.txt /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /usr/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /usr/share/cmake/Modules/Linker/GNU-CXX.cmake /usr/share/cmake/Modules/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/4.1.2/CMakeCXXCompiler.cmake CMakeFiles/4.1.2/CMakeSystem.cmake: phony
 
 
 #############################################

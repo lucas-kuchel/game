@@ -1,14 +1,8 @@
 [
 {
-  "directory": "/Users/lucas/Documents/Development/game/build",
-  "command": "/usr/bin/c++ -I/Users/lucas/Documents/Development/game/game/src/include -I/Users/lucas/Documents/Development/game/engine/src/include -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Wnonnull -Wimplicit-fallthrough -Wunused -o game/CMakeFiles/game.dir/src/main.cpp.o -c /Users/lucas/Documents/Development/game/game/src/main.cpp",
-  "file": "/Users/lucas/Documents/Development/game/game/src/main.cpp",
-  "output": "/Users/lucas/Documents/Development/game/build/game/CMakeFiles/game.dir/src/main.cpp.o"
-},
-{
-  "directory": "/Users/lucas/Documents/Development/game/build",
-  "command": "/usr/bin/c++ -I/Users/lucas/Documents/Development/game/engine/src/include -g -std=c++2b -arch arm64 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Wnonnull -Wimplicit-fallthrough -Wunused -o engine/CMakeFiles/engine.dir/src/subsystem.cpp.o -c /Users/lucas/Documents/Development/game/engine/src/subsystem.cpp",
-  "file": "/Users/lucas/Documents/Development/game/engine/src/subsystem.cpp",
-  "output": "/Users/lucas/Documents/Development/game/build/engine/CMakeFiles/engine.dir/src/subsystem.cpp.o"
+  "directory": "/home/lucas-kuchel/Documents/Development/game/build",
+  "command": "/usr/bin/c++ -I/home/lucas-kuchel/Documents/Development/game/game/source/include -I/home/lucas-kuchel/Documents/Development/game/spark-engine/source/include -g -std=c++23 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Wnonnull -Wimplicit-fallthrough -Wunused -o game/CMakeFiles/game.dir/source/main.cpp.o -c /home/lucas-kuchel/Documents/Development/game/game/source/main.cpp",
+  "file": "/home/lucas-kuchel/Documents/Development/game/game/source/main.cpp",
+  "output": "/home/lucas-kuchel/Documents/Development/game/build/game/CMakeFiles/game.dir/source/main.cpp.o"
 }
 ]

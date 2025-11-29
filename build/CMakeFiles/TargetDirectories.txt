@@ -1,8 +1,7 @@
-/Users/lucas/Documents/Development/game/build/CMakeFiles/edit_cache.dir
-/Users/lucas/Documents/Development/game/build/CMakeFiles/rebuild_cache.dir
-/Users/lucas/Documents/Development/game/build/game/CMakeFiles/game.dir
-/Users/lucas/Documents/Development/game/build/game/CMakeFiles/edit_cache.dir
-/Users/lucas/Documents/Development/game/build/game/CMakeFiles/rebuild_cache.dir
-/Users/lucas/Documents/Development/game/build/engine/CMakeFiles/engine.dir
-/Users/lucas/Documents/Development/game/build/engine/CMakeFiles/edit_cache.dir
-/Users/lucas/Documents/Development/game/build/engine/CMakeFiles/rebuild_cache.dir
+/home/lucas-kuchel/Documents/Development/game/build/CMakeFiles/edit_cache.dir
+/home/lucas-kuchel/Documents/Development/game/build/CMakeFiles/rebuild_cache.dir
+/home/lucas-kuchel/Documents/Development/game/build/game/CMakeFiles/game.dir
+/home/lucas-kuchel/Documents/Development/game/build/game/CMakeFiles/edit_cache.dir
+/home/lucas-kuchel/Documents/Development/game/build/game/CMakeFiles/rebuild_cache.dir
+/home/lucas-kuchel/Documents/Development/game/build/spark-engine/CMakeFiles/edit_cache.dir
+/home/lucas-kuchel/Documents/Development/game/build/spark-engine/CMakeFiles/rebuild_cache.dir
