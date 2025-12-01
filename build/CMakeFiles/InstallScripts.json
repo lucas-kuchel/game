@@ -1,9 +1,10 @@
 {
 	"InstallScripts" : 
 	[
-		"/home/lucas-kuchel/Documents/Development/game/build/cmake_install.cmake",
-		"/home/lucas-kuchel/Documents/Development/game/build/game/cmake_install.cmake",
-		"/home/lucas-kuchel/Documents/Development/game/build/spark-engine/cmake_install.cmake"
+		"/Users/lucas/Documents/Development/game/build/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/game/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/_deps/entt-build/cmake_install.cmake",
+		"/Users/lucas/Documents/Development/game/build/spark-engine/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

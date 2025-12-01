@@ -38,14 +38,11 @@ namespace spark {
             construct<Fn, C>(caller, instance);
         }
 
-        template <typename... Args>
-        void dispatch(Args&&... args) {
+        void dispatch(const event_type& event) {
             for (auto& instance : delegates_) {
                 if (instance.invoke == nullptr) {
                     continue;
                 }
-
-                T event = T(forward<Args>(args)...);
 
                 instance.invoke(instance.instance, &event);
             }
@@ -74,7 +71,7 @@ namespace spark {
 
     private:
         struct delegate {
-            using invoke_function = void (*)(void*, void*);
+            using invoke_function = void (*)(void*, const void*);
 
             void* instance = nullptr;
 
@@ -132,12 +129,12 @@ namespace spark {
         }
 
         template <auto Fn>
-        static void invokeFree(void*, void* event) {
+        static void invokeFree(void*, const void* event) {
             Fn(*static_cast<const event_type*>(event));
         }
 
         template <typename C, auto Fn>
-        static void invokeMember(void* instance, void* event) {
+        static void invokeMember(void* instance, const void* event) {
             auto* object = static_cast<C*>(instance);
 
             (object->*Fn)(*static_cast<const event_type*>(event));
@@ -146,18 +143,4 @@ namespace spark {
         list<size_type, size_type> delegateFreeList_;
         list<delegate, size_type> delegates_;
     };
-
-    namespace detail {
-        template <typename T = uint64>
-        requires(is_unsigned<T>)
-        struct signal_delegate {
-            using size_type = T;
-            using signal_dummy = signal<size_type, size_type>;
-            using signal_filler = filler_of<signal_dummy>;
-            using signal_destructor = void (*)(void*);
-
-            signal_filler filler;
-            signal_destructor destructor = nullptr;
-        };
-    }
 }

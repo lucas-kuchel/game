@@ -1,6 +1,5 @@
 #pragma once
 
-#include <spark/events/queue.hpp>
 #include <spark/events/signal.hpp>
 
 namespace spark {
@@ -13,14 +12,20 @@ namespace spark {
         using signal_filler = filler_of<signal_dummy>;
         using signal_destructor = void (*)(void*);
 
-        using queue_dummy = queue<size_type, size_type>;
-        using queue_filler = filler_of<queue_dummy>;
-        using queue_destructor = void (*)(void*);
+        using list_dummy = list<size_type, size_type>;
+        using list_filler = filler_of<list_dummy>;
+        using list_destructor = void (*)(void*);
+        using list_clearer = void (*)(void*);
+
+        using dispatch_call = void (*)(void*, void*);
 
         signal_filler signalFiller;
-        signal_destructor signalDestructor = nullptr;
+        signal_destructor destructSignal = nullptr;
 
-        queue_filler queueFiller;
-        queue_destructor queueDestructor = nullptr;
+        list_filler listFiller;
+        list_clearer clearList = nullptr;
+        list_destructor destructList = nullptr;
+
+        dispatch_call dispatch = nullptr;
     };
 }

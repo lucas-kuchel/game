@@ -1,5 +1,6 @@
 #pragma once
 
+#include <spark/events/family.hpp>
 #include <spark/events/signal.hpp>
 
 namespace spark {
@@ -10,8 +11,8 @@ namespace spark {
         using event_type = T;
         using size_type = U;
 
-        sink(list<detail::signal_delegate<size_type>, size_type>& signals, size_type index)
-            : signals_(&signals), index_(index) {
+        sink(list<family<size_type>, size_type>& families, size_type index)
+            : families_(&families), index_(index) {
         }
 
         ~sink() = default;
@@ -58,13 +59,13 @@ namespace spark {
 
     private:
         signal<event_type, size_type>& acquire() {
-            auto& filler = (*signals_)[index_].filler;
+            auto& filler = (*families_)[index_].signalFiller;
             auto& instance = *reinterpret_cast<signal<event_type, size_type>*>(&filler);
 
             return instance;
         }
 
-        list<detail::signal_delegate<size_type>, size_type>* signals_;
+        list<family<size_type>, size_type>* families_;
         size_type index_;
     };
 }
